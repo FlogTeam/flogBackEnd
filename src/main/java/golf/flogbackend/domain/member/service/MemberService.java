@@ -42,5 +42,24 @@ public class MemberService {
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> login(LoginRequestDto loginRequestDto, HttpServletResponse httpServletResponse) {
+        String email = loginRequestDto.getEmail();
+        Member member = memberRepository.findById(email).orElseThrow(
+                () -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. email : " + email)
+        );
 
+        System.out.println(member.getPassword());
+        System.out.println(loginRequestDto.getPassword());
+        if (passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
+            throw new InvalidParameterException("비밀번호를 틀렸습니다.");
+        }
+
+        TokenDto tokenDto = jwtUtil.createAllToken(member);
+        String refreshToken = tokenDto.getRefreshToken();
+        redisUtil.set(email, refreshToken, Duration.ofDays(7).toMillis());
+        httpServletResponse.addHeader(JwtUtil.ACCESS_KEY, tokenDto.getAccessToken());
+        httpServletResponse.addHeader(JwtUtil.REFRESH_KEY, tokenDto.getRefreshToken());
+        return ResponseEntity.ok("로그인 성공");
+    }
 }

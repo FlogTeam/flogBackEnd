@@ -23,4 +23,9 @@ public class MemberController {
         return memberService.signup(signupRequestDto);
     }
 
+    @PostMapping("/api/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse httpServletResponse) {
+        return memberService.login(loginRequestDto, httpServletResponse);
+    }
+
 }
