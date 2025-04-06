@@ -28,4 +28,10 @@ public class MemberController {
         return memberService.login(loginRequestDto, httpServletResponse);
     }
 
+    @GetMapping("/api/mail")
+    public ResponseEntity<String>  mailSend(@AuthenticationPrincipal UserDetailsImpl userPrincipal) throws MessagingException {
+        return memberService.mailSend(userPrincipal.getMember());
+    }
+
+
 }

@@ -62,4 +62,9 @@ public class MemberService {
         httpServletResponse.addHeader(JwtUtil.REFRESH_KEY, tokenDto.getRefreshToken());
         return ResponseEntity.ok("로그인 성공");
     }
+
+    public ResponseEntity<String> mailSend(Member member) throws MessagingException {
+        emailSender.send(member.getEmail(), UUID.randomUUID().toString().substring(0, 8));
+        return ResponseEntity.ok("");
+    }
 }
