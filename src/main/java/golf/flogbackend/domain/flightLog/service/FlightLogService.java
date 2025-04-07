@@ -6,6 +6,7 @@ import golf.flogbackend.domain.flightLog.dto.SaveFlightLogStepOneRequestDto;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import golf.flogbackend.domain.member.entity.Member;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
@@ -22,8 +23,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.TimeZone;
 
 @Service
@@ -36,6 +39,12 @@ public class FlightLogService {
 
     @Transactional
     public ResponseEntity<FlightLogResponseDto.AggregateDto> saveFlightLogStepOne(Member member, SaveFlightLogStepOneRequestDto saveFlightLogStepOneRequestDto) throws ParseException {
+        String flightId = saveFlightLogStepOneRequestDto.getFlightId();
+        LocalDate flightDate = saveFlightLogStepOneRequestDto.getFlightDate();
+
+        Optional<FlightLog> flightLogCheck = flightLogRepository.findByMemberIdAndFlightIdAndFlightDate(member.getEmail(), flightId, flightDate);
+        if (flightLogCheck.isPresent()) throw new EntityExistsException("flightLogId : " + flightLogCheck.get().getId());
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("x-rapidapi-host", "aerodatabox.p.rapidapi.com");
@@ -43,9 +52,9 @@ public class FlightLogService {
 
         StringBuilder apiUrl = new StringBuilder();
         apiUrl.append("https://aerodatabox.p.rapidapi.com/flights/number/")
-                .append(saveFlightLogStepOneRequestDto.getFlightId())
+                .append(flightId)
                 .append("/")
-                .append(saveFlightLogStepOneRequestDto.getFlightDate())
+                .append(flightDate)
                 .append("/?dateLocalRole=Both");
 
         URI uri = URI.create(apiUrl.toString());
