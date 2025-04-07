@@ -2,14 +2,13 @@ package golf.flogbackend.domain.flightLog.entity;
 
 import golf.flogbackend.util.Timestamped;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.TimeZone;
 
 @Entity
@@ -28,9 +27,10 @@ public class FlightLog extends Timestamped {
     private String flightId;
     @Column
     private LocalDate flightDate;
+
     @Column
     private String airline;
-    @Column
+    @Column @Setter
     private String duty;
 
     //aircraft info
@@ -41,6 +41,10 @@ public class FlightLog extends Timestamped {
 
 
     //departure info
+    @Column
+    private LocalDate depDateUtc;
+    @Column
+    private LocalDate depDateLocal;
     @Column
     private String depAirportCode;
     @Column
@@ -56,20 +60,24 @@ public class FlightLog extends Timestamped {
     @Column
     private TimeZone depAirportTimezone;
     @Column
-    private ZonedDateTime depScheduledTimeUtc;
+    private LocalTime depScheduledTimeUtc;
     @Column
-    private ZonedDateTime depScheduledTimeLocal;
+    private LocalTime depScheduledTimeLocal;
     @Column
-    private ZonedDateTime depRevisedTimeUtc;
+    private LocalTime depRevisedTimeUtc;
     @Column
-    private ZonedDateTime depRevisedTimeLocal;
+    private LocalTime depRevisedTimeLocal;
     @Column
-    private ZonedDateTime depRunwayTimeUtc;
+    private LocalTime depRunwayTimeUtc;
     @Column
-    private ZonedDateTime depRunwayTimeLocal;
+    private LocalTime depRunwayTimeLocal;
 
 
     //arrival info
+    @Column
+    private LocalDate arrivalDateUtc;
+    @Column
+    private LocalDate arrivalDateLocal;
     @Column
     private String arrivalAirportCode;
     @Column
@@ -85,13 +93,13 @@ public class FlightLog extends Timestamped {
     @Column
     private TimeZone arrivalAirportTimezone;
     @Column
-    private ZonedDateTime arrivalScheduledTimeUtc;
+    private LocalTime arrivalScheduledTimeUtc;
     @Column
-    private ZonedDateTime arrivalScheduledTimeLocal;
+    private LocalTime arrivalScheduledTimeLocal;
     @Column
-    private ZonedDateTime arrivalPredictedTimeUtc;
+    private LocalTime arrivalPredictedTimeUtc;
     @Column
-    private ZonedDateTime arrivalPredictedTimeLocal;
+    private LocalTime arrivalPredictedTimeLocal;
 
 
     //distance info
