@@ -4,6 +4,7 @@ import golf.flogbackend.util.Timestamped;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -16,6 +17,7 @@ import java.util.TimeZone;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
+@DynamicUpdate
 public class FlightLog extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +32,7 @@ public class FlightLog extends Timestamped {
 
     @Column
     private String airline;
-    @Column @Setter
+    @Column
     private String duty;
 
     //aircraft info
@@ -64,13 +66,9 @@ public class FlightLog extends Timestamped {
     @Column
     private LocalTime depScheduledTimeLocal;
     @Column
-    private LocalTime depRevisedTimeUtc;
+    private LocalTime depActualTimeUtc;
     @Column
-    private LocalTime depRevisedTimeLocal;
-    @Column
-    private LocalTime depRunwayTimeUtc;
-    @Column
-    private LocalTime depRunwayTimeLocal;
+    private LocalTime depActualTimeLocal;
 
 
     //arrival info
@@ -97,9 +95,9 @@ public class FlightLog extends Timestamped {
     @Column
     private LocalTime arrivalScheduledTimeLocal;
     @Column
-    private LocalTime arrivalPredictedTimeUtc;
+    private LocalTime arrivalActualTimeUtc;
     @Column
-    private LocalTime arrivalPredictedTimeLocal;
+    private LocalTime arrivalActualTimeLocal;
 
 
     //distance info

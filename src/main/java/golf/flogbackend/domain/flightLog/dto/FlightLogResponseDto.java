@@ -22,23 +22,9 @@ public class FlightLogResponseDto {
 
     @Getter
     @Builder
-    public static class RevisedTimeDto {
-        private LocalTime RevisedTimeUtc;
-        private LocalTime RevisedTimeLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class RunawayTimeDto {
-        private LocalTime runawayTimeUtc;
-        private LocalTime runawayTimeLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class PredictedTimeDto {
-        private LocalTime predictedTimeUtc;
-        private LocalTime predictedTimeLocal;
+    public static class ActualTimeDto {
+        private LocalTime actualTimeUtc;
+        private LocalTime actualTimeLocal;
     }
 
     @Getter
@@ -77,8 +63,7 @@ public class FlightLogResponseDto {
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
-        private RevisedTimeDto revisedTime;
-        private RunawayTimeDto runawayTime;
+        private ActualTimeDto actualTime;
         private CountryDto country;
     }
 
@@ -90,7 +75,7 @@ public class FlightLogResponseDto {
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
-        private PredictedTimeDto predictedTime;
+        private ActualTimeDto actualTime;
         private CountryDto country;
     }
 
