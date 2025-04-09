@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 
 @Getter
-public class SaveFlightLogStepOneRequestDto {
+public class SaveFlightLogRequestDto {
     private String flightId;
     private LocalDate flightDate;
 }
