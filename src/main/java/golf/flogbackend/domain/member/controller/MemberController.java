@@ -15,20 +15,21 @@ import java.nio.file.attribute.UserPrincipal;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class MemberController {
     private final MemberService memberService;
 
-    @PostMapping("/api/signup")
+    @PostMapping("/signup")
     public ResponseEntity<Object> signup(@RequestBody SignupRequestDto signupRequestDto) {
         return memberService.signup(signupRequestDto);
     }
 
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse httpServletResponse) {
         return memberService.login(loginRequestDto, httpServletResponse);
     }
 
-    @GetMapping("/api/mail")
+    @GetMapping("/mail")
     public ResponseEntity<String>  mailSend(@AuthenticationPrincipal UserDetailsImpl userPrincipal) throws MessagingException {
         return memberService.mailSend(userPrincipal.getMember());
     }

@@ -4,7 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.TimeZone;
 
 
@@ -13,29 +14,22 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class ScheduledTimeDto {
-        private ZonedDateTime scheduledTimeUtc;
-        private ZonedDateTime scheduledTimeLocal;
+        private LocalTime scheduledTimeUtc;
+        private LocalTime scheduledTimeLocal;
     }
 
     @Getter
     @Builder
-    public static class RevisedTimeDto {
-        private ZonedDateTime RevisedTimeUtc;
-        private ZonedDateTime RevisedTimeLocal;
+    public static class ActualTimeDto {
+        private LocalTime actualTimeUtc;
+        private LocalTime actualTimeLocal;
     }
 
     @Getter
     @Builder
-    public static class RunawayTimeDto {
-        private ZonedDateTime runawayTimeUtc;
-        private ZonedDateTime runawayTimeLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class PredictedTimeDto {
-        private ZonedDateTime predictedTimeUtc;
-        private ZonedDateTime predictedTimeLocal;
+    public static class DateInfoDto {
+        private LocalDate dateUtc;
+        private LocalDate dateLocal;
     }
 
     @Getter
@@ -62,32 +56,25 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class DepartureDto {
-        private AirportDto airportDto;
+        private DateInfoDto dateInfo;
+        private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
-        private RevisedTimeDto revisedTime;
-        private RunawayTimeDto runawayTime;
+        private ActualTimeDto actualTime;
         private CountryDto country;
     }
 
     @Getter
     @Builder
     public static class ArrivalDto {
-        private AirportDto airportDto;
+        private DateInfoDto dateInfo;
+        private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
-        private PredictedTimeDto predictedTime;
+        private ActualTimeDto actualTime;
         private CountryDto country;
-    }
-
-    @Getter
-    @Builder
-    public static class DistanceDto {
-        private Double distanceKilometers;
-        private Double distanceMeters;
-        private Double distanceMiles;
     }
 
     @Getter
@@ -101,9 +88,30 @@ public class FlightLogResponseDto {
     @Builder
     public static class FlightInfoDto {
         private String flightId;
-        private LocalDate flightDate;
         private String airline;
+    }
+
+    @Getter
+    @Builder
+    public static class CrewDto {
+        private String crewName;
+    }
+
+    @Getter
+    @Builder
+    public static class EtcInfoDto {
         private String duty;
+        private List<CrewDto> crewMembers;
+    }
+
+    @Getter
+    @Builder
+    public static class StepOneResponseDto {
+        private Long flightLogId;
+        private FlightInfoDto flightInfo;
+        private DepartureDto departure;
+        private ArrivalDto arrival;
+        private AircraftDto aircraft;
     }
 
     @Getter
@@ -116,9 +124,11 @@ public class FlightLogResponseDto {
         private ArrivalDto arrival;
         private AircraftDto aircraft;
         private DistanceDto distance;
-        private FlightTimeDto  flightTime;
+        private FlightTimeDto flightTime;
+        private EtcInfoDto etcInfo;
     }
 
+    //summary
     @Getter
     public static class FlightTimeDto {
         private int hours;
@@ -132,4 +142,14 @@ public class FlightLogResponseDto {
             this.seconds = remainingSeconds % 60;
         }
     }
+
+    @Getter
+    @Builder
+    public static class DistanceDto {
+        private Double distanceKilometers;
+        private Double distanceMeters;
+        private Double distanceMiles;
+    }
+
+
 }
