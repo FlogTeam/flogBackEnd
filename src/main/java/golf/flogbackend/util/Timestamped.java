@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @MappedSuperclass
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Timestamped {

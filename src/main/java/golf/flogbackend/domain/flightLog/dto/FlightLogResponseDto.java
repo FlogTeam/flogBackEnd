@@ -1,12 +1,10 @@
 package golf.flogbackend.domain.flightLog.dto;
 
-import golf.flogbackend.domain.crew.entity.Crew;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -58,8 +56,8 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class DepartureDto {
-        private DateInfoDto dateInfoDto;
-        private AirportDto airportDto;
+        private DateInfoDto dateInfo;
+        private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
@@ -70,8 +68,8 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class ArrivalDto {
-        private DateInfoDto dateInfoDto;
-        private AirportDto airportDto;
+        private DateInfoDto dateInfo;
+        private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;
         private ScheduledTimeDto scheduledTime;
@@ -126,8 +124,8 @@ public class FlightLogResponseDto {
         private ArrivalDto arrival;
         private AircraftDto aircraft;
         private DistanceDto distance;
-        private FlightTimeDto  flightTime;
-        private EtcInfoDto  etcInfo;
+        private FlightTimeDto flightTime;
+        private EtcInfoDto etcInfo;
     }
 
     //summary

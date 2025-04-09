@@ -2,21 +2,21 @@ package golf.flogbackend.domain.flightLog.entity;
 
 import golf.flogbackend.util.Timestamped;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.TimeZone;
 
 @Entity
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @DynamicUpdate
 public class FlightLog extends Timestamped {
     @Id
