@@ -1,78 +1,55 @@
-package golf.flogbackend.domain.flightLog.dto;
+package golf.flogbackend.domain.flightLog.support;
 
 import golf.flogbackend.domain.crew.entity.Crew;
+import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.entity.Aircraft;
 import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public class FlightLogResponseDtoMapper {
+
     public enum EndpointEnum {
         DEPARTURE,
         ARRIVAL
     }
 
+    private static FlightEndpoint getEndpoint(FlightLog flightLog, EndpointEnum endpoint) {
+        return switch (endpoint) {
+            case DEPARTURE -> flightLog.getDeparture();
+            case ARRIVAL -> flightLog.getArrival();
+        };
+    }
+
     public static FlightLogResponseDto.ScheduledTimeDto buildScheduledTimeDto(EndpointEnum endpoint, FlightLog flightLog) {
-        LocalTime scheduledTimeUtc = flightLog.getArrival().getScheduledTimeUtc();
-        LocalTime scheduledTimeLocal = flightLog.getArrival().getScheduledTimeLocal();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            scheduledTimeUtc = flightLog.getDeparture().getScheduledTimeUtc();
-            scheduledTimeLocal = flightLog.getDeparture().getScheduledTimeLocal();
-        }
-        return new FlightLogResponseDto.ScheduledTimeDto(scheduledTimeUtc, scheduledTimeLocal);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.ScheduledTimeDto(flightEndpoint.getScheduledTimeUtc(), flightEndpoint.getScheduledTimeLocal());
     }
 
     public static FlightLogResponseDto.ActualTimeDto buildActualTimeDto(EndpointEnum endpoint, FlightLog flightLog) {
-        LocalTime actualTimeUtc = flightLog.getArrival().getActualTimeUtc();
-        LocalTime actualTimeLocal = flightLog.getArrival().getActualTimeLocal();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            actualTimeUtc = flightLog.getDeparture().getActualTimeUtc();
-            actualTimeLocal = flightLog.getDeparture().getActualTimeLocal();
-        }
-        return new FlightLogResponseDto.ActualTimeDto(actualTimeUtc, actualTimeLocal);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.ActualTimeDto(flightEndpoint.getActualTimeUtc(), flightEndpoint.getActualTimeLocal());
     }
 
     public static FlightLogResponseDto.DateInfoDto buildDateInfoDto(EndpointEnum endpoint, FlightLog flightLog) {
-        LocalDate dateUtc = flightLog.getArrival().getDateUtc();
-        LocalDate dateLocal = flightLog.getArrival().getDateLocal();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            dateUtc = flightLog.getDeparture().getDateUtc();
-            dateLocal = flightLog.getDeparture().getDateLocal();
-        }
-        return new FlightLogResponseDto.DateInfoDto(dateUtc, dateLocal);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.DateInfoDto(flightEndpoint.getDateUtc(), flightEndpoint.getDateLocal());
     }
 
     public static FlightLogResponseDto.AirportDto buildAirportDto(EndpointEnum endpoint, FlightLog flightLog) {
-        String airportCode = flightLog.getArrival().getAirportCode();
-        String airportName = flightLog.getArrival().getAirportName();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            airportCode = flightLog.getDeparture().getAirportCode();
-            airportName = flightLog.getDeparture().getAirportName();
-        }
-        return new FlightLogResponseDto.AirportDto(airportCode, airportName);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.AirportDto(flightEndpoint.getAirportCode(), flightEndpoint.getAirportName());
     }
 
     public static FlightLogResponseDto.LocationDto buildLocationDto(EndpointEnum endpoint, FlightLog flightLog) {
-        Double latitude = flightLog.getArrival().getAirportLocationLat();
-        Double longitude = flightLog.getArrival().getAirportLocationLon();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            latitude = flightLog.getDeparture().getAirportLocationLat();
-            longitude = flightLog.getDeparture().getAirportLocationLon();
-        }
-        return new FlightLogResponseDto.LocationDto(latitude, longitude);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.LocationDto(flightEndpoint.getAirportLocationLat(), flightEndpoint.getAirportLocationLon());
     }
 
     public static FlightLogResponseDto.CountryDto buildCountryDto(EndpointEnum endpoint, FlightLog flightLog) {
-        String countryCode = flightLog.getArrival().getCountryCode();
-        String countryName = flightLog.getArrival().getCountryName();
-        if (endpoint == EndpointEnum.DEPARTURE) {
-            countryCode = flightLog.getDeparture().getCountryCode();
-            countryName = flightLog.getDeparture().getCountryName();
-        }
-        return new FlightLogResponseDto.CountryDto(countryCode, countryName);
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.CountryDto(flightEndpoint.getCountryCode(), flightEndpoint.getCountryName());
     }
 
     public static FlightLogResponseDto.FlightInfoDto buildFlightInfoDto(FlightLog flightLog) {

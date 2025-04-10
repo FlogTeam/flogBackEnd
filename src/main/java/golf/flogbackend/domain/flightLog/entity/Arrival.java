@@ -1,5 +1,6 @@
 package golf.flogbackend.domain.flightLog.entity;
 
+import golf.flogbackend.domain.flightLog.support.FlightEndpoint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
@@ -12,11 +13,11 @@ import java.time.LocalTime;
 import java.util.TimeZone;
 
 @Embeddable
-@Getter
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class Arrival {
+@Getter
+public class Arrival implements FlightEndpoint {
     @Column
     private LocalDate dateUtc;
     @Column
