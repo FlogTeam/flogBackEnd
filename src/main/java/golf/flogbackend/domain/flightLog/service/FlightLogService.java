@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
-import static golf.flogbackend.domain.flightLog.dto.FlightLogResponsDtoMapper.*;
+import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDtoMapper.*;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogAllInfoDto;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
 
