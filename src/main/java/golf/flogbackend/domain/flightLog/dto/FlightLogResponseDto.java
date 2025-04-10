@@ -104,30 +104,6 @@ public class FlightLogResponseDto {
         private List<CrewDto> crewMembers;
     }
 
-    @Getter
-    @Builder
-    public static class StepOneResponseDto {
-        private Long flightLogId;
-        private FlightInfoDto flightInfo;
-        private DepartureDto departure;
-        private ArrivalDto arrival;
-        private AircraftDto aircraft;
-    }
-
-    @Getter
-    @Builder
-    public static class AggregateDto {
-        private Long flightLogId;
-        private String memberId;
-        private FlightInfoDto flightInfo;
-        private DepartureDto departure;
-        private ArrivalDto arrival;
-        private AircraftDto aircraft;
-        private DistanceDto distance;
-        private FlightTimeDto flightTime;
-        private EtcInfoDto etcInfo;
-    }
-
     //summary
     @Getter
     public static class FlightTimeDto {
@@ -149,6 +125,30 @@ public class FlightLogResponseDto {
         private Double distanceKilometers;
         private Double distanceMeters;
         private Double distanceMiles;
+    }
+
+    @Getter
+    @Builder
+    public static class FlightLogSaveResponseDto {
+        private Long flightLogId;
+        private FlightInfoDto flightInfo;
+        private DepartureDto departure;
+        private ArrivalDto arrival;
+        private AircraftDto aircraft;
+    }
+
+    @Getter
+    @Builder
+    public static class FlightLogAllInfoDto {
+        private Long flightLogId;
+        private String memberId;
+        private FlightInfoDto flightInfo;
+        private DepartureDto departure;
+        private ArrivalDto arrival;
+        private AircraftDto aircraft;
+        private DistanceDto distance;
+        private FlightTimeDto flightTime;
+        private EtcInfoDto etcInfo;
     }
 
 

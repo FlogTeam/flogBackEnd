@@ -9,8 +9,6 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.TimeZone;
 
 @Entity
 @Getter
@@ -24,90 +22,55 @@ public class FlightLog extends Timestamped {
     private Long id;
     @Column
     private String memberId;
-
     @Column
     private String flightId;
     @Column
     private LocalDate flightDate;
-
     @Column
     private String airline;
     @Column
     private String duty;
 
-    //aircraft info
-    @Column
-    private String aircraftNumber;
-    @Column
-    private String aircraftType;
+    @Embedded
+    private Aircraft aircraft;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "dateUtc", column = @Column(name = "departure_date_utc")),
+            @AttributeOverride(name = "dateLocal", column = @Column(name = "departure_date_local")),
+            @AttributeOverride(name = "airportCode", column = @Column(name = "departure_airport_code")),
+            @AttributeOverride(name = "airportName", column = @Column(name = "departure_airport_name")),
+            @AttributeOverride(name = "countryCode", column = @Column(name = "departure_country_code")),
+            @AttributeOverride(name = "countryName", column = @Column(name = "departure_country_name")),
+            @AttributeOverride(name = "airportLocationLon", column = @Column(name = "departure_airport_location_lon")),
+            @AttributeOverride(name = "airportLocationLat", column = @Column(name = "departure_airport_location_lat")),
+            @AttributeOverride(name = "airportTimezone", column = @Column(name = "departure_airport_timezone")),
+            @AttributeOverride(name = "scheduledTimeUtc", column = @Column(name = "departure_scheduled_time_utc")),
+            @AttributeOverride(name = "scheduledTimeLocal", column = @Column(name = "departure_scheduled_time_local")),
+            @AttributeOverride(name = "actualTimeUtc", column = @Column(name = "departure_actual_time_utc")),
+            @AttributeOverride(name = "actualTimeLocal", column = @Column(name = "departure_actual_time_local"))
+    })
+    private Departure departure;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "dateUtc", column = @Column(name = "arrival_date_utc")),
+            @AttributeOverride(name = "dateLocal", column = @Column(name = "arrival_date_local")),
+            @AttributeOverride(name = "airportCode", column = @Column(name = "arrival_airport_code")),
+            @AttributeOverride(name = "airportName", column = @Column(name = "arrival_airport_name")),
+            @AttributeOverride(name = "countryCode", column = @Column(name = "arrival_country_code")),
+            @AttributeOverride(name = "countryName", column = @Column(name = "arrival_country_name")),
+            @AttributeOverride(name = "airportLocationLon", column = @Column(name = "arrival_airport_location_lon")),
+            @AttributeOverride(name = "airportLocationLat", column = @Column(name = "arrival_airport_location_lat")),
+            @AttributeOverride(name = "airportTimezone", column = @Column(name = "arrival_airport_timezone")),
+            @AttributeOverride(name = "scheduledTimeUtc", column = @Column(name = "arrival_scheduled_time_utc")),
+            @AttributeOverride(name = "scheduledTimeLocal", column = @Column(name = "arrival_scheduled_time_local")),
+            @AttributeOverride(name = "actualTimeUtc", column = @Column(name = "arrival_actual_time_utc")),
+            @AttributeOverride(name = "actualTimeLocal", column = @Column(name = "arrival_actual_time_local"))
+    })
+    private Arrival arrival;
 
-    //departure info
-    @Column
-    private LocalDate depDateUtc;
-    @Column
-    private LocalDate depDateLocal;
-    @Column
-    private String depAirportCode;
-    @Column
-    private String depAirportName;
-    @Column
-    private String depCountryCode;
-    @Column
-    private String depCountryName;
-    @Column
-    private Double depAirportLocationLon;
-    @Column
-    private Double depAirportLocationLat;
-    @Column
-    private TimeZone depAirportTimezone;
-    @Column
-    private LocalTime depScheduledTimeUtc;
-    @Column
-    private LocalTime depScheduledTimeLocal;
-    @Column
-    private LocalTime depActualTimeUtc;
-    @Column
-    private LocalTime depActualTimeLocal;
-
-
-    //arrival info
-    @Column
-    private LocalDate arrivalDateUtc;
-    @Column
-    private LocalDate arrivalDateLocal;
-    @Column
-    private String arrivalAirportCode;
-    @Column
-    private String arrivalAirportName;
-    @Column
-    private String arrivalCountryCode;
-    @Column
-    private String arrivalCountryName;
-    @Column
-    private Double arrivalAirportLocationLon;
-    @Column
-    private Double arrivalAirportLocationLat;
-    @Column
-    private TimeZone arrivalAirportTimezone;
-    @Column
-    private LocalTime arrivalScheduledTimeUtc;
-    @Column
-    private LocalTime arrivalScheduledTimeLocal;
-    @Column
-    private LocalTime arrivalActualTimeUtc;
-    @Column
-    private LocalTime arrivalActualTimeLocal;
-
-
-    //distance info
-    @Column
-    private Double distanceKilometers;
-    @Column
-    private Double distanceMiles;
-    @Column
-    private Double distanceMeters;
-
+    @Embedded
+    private Distance distance;
 
     @Column
     private Long flightTime;
