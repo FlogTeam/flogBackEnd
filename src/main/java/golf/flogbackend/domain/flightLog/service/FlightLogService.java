@@ -10,6 +10,9 @@ import golf.flogbackend.domain.flightLog.dto.SaveFlightLogRequestDto;
 import golf.flogbackend.domain.flightLog.dto.UpdateFlightLogRequestDto;
 import golf.flogbackend.domain.flightLog.entity.*;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
+import golf.flogbackend.domain.flightLog.support.EndpointEnum;
+import golf.flogbackend.domain.flightLog.support.FlightEndpoint;
+import golf.flogbackend.domain.flightLog.support.FlightLogUtil;
 import golf.flogbackend.domain.member.entity.Member;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,9 +37,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogAllInfoDto;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
 
 
 @Service
@@ -47,7 +52,7 @@ public class FlightLogService {
     private final FlightLogRepository flightLogRepository;
     private final CountryRepository countryRepository;
     private final CrewRepository crewRepository;
-    private final AirportRepository airportRepository;
+    private final FlightLogUtil flightLogUtil;
 
     @Transactional
     public ResponseEntity<FlightLogSaveResponseDto> saveFlightLogStepOne(Member member, SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
@@ -121,7 +126,7 @@ public class FlightLogService {
                         .airportName((String) depAirportData.get("name"))
                         .airportTimezone(TimeZone.getTimeZone((String) depAirportData.get("timeZone")))
                         .countryCode(depCountryCode)
-                        .countryName(findCountryByCode(depCountryCode).getCountryName())
+                        .countryName(flightLogUtil.findCountryByCode(depCountryCode).getCountryName())
                         .build())
                 .arrival(Arrival.builder()
                         .dateUtc(arrivalPredictedUtc.toLocalDate())
@@ -134,7 +139,7 @@ public class FlightLogService {
                         .airportName((String) arrivalAirportData.get("name"))
                         .airportTimezone(TimeZone.getTimeZone((String) arrivalAirportData.get("timeZone")))
                         .countryCode(arrivalCountryCode)
-                        .countryName(findCountryByCode(arrivalCountryCode).getCountryName())
+                        .countryName(flightLogUtil.findCountryByCode(arrivalCountryCode).getCountryName())
                         .build())
                 .aircraft(Aircraft.builder()
                         .aircraftNumber((String) aircraftData.get("reg"))
@@ -160,7 +165,7 @@ public class FlightLogService {
     public ResponseEntity<FlightLogAllInfoDto> updateFlightLog(Member member, UpdateFlightLogRequestDto updateFlightLogRequestDto) {
         Long flightLogId = updateFlightLogRequestDto.getFlightLogId();
 
-        FlightLog flightLog = findFlightLogById(flightLogId);
+        FlightLog flightLog = flightLogUtil.findFlightLogById(flightLogId);
 
         Aircraft aircraft = flightLog.getAircraft();
         Departure departure = flightLog.getDeparture();
@@ -218,7 +223,7 @@ public class FlightLogService {
             if (setDepAirportCode.equals(setArrivalAirportCode))
                 throw new IllegalArgumentException("DepAirportCode and ArrivalAirportCode cannot be the same");
             if (!setDepAirportCode.equals(getDepAirportCode)) {
-                Airport airport = findAirportByCode(setDepAirportCode);
+                Airport airport = flightLogUtil.findAirportByCode(setDepAirportCode);
                 departure = departure.toBuilder()
                         .airportCode(airport.getCode())
                         .airportName(airport.getName())
@@ -233,7 +238,7 @@ public class FlightLogService {
             }
         }
         if (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode)) {
-            Airport airport = findAirportByCode(setArrivalAirportCode);
+            Airport airport = flightLogUtil.findAirportByCode(setArrivalAirportCode);
             arrival = arrival.toBuilder()
                     .airportCode(airport.getCode())
                     .airportName(airport.getName())
@@ -288,29 +293,5 @@ public class FlightLogService {
                                 .flightLogId(flightLogId)
                                 .build())
                         .toList()) : List.of()));
-    }
-
-    public static Double distanceInKilometerByHaversine(double lat1, double lat2, double lon1, double lon2) {
-        final double RADIUS = 6371;
-        double dLat = Math.toRadians(lat1 - lat2);
-        double dLon = Math.toRadians(lon1 - lon2);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return RADIUS * 2 * Math.asin(Math.sqrt(a));
-    }
-
-    private FlightLog findFlightLogById(Long id) {
-        return flightLogRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-    }
-
-    private Airport findAirportByCode(String code) {
-        return airportRepository.findById(code).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 공항 코드 : " + code));
-    }
-
-    private Country findCountryByCode(String code) {
-        return countryRepository.findById(code).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 나라 코드 : " + code));
     }
 }
