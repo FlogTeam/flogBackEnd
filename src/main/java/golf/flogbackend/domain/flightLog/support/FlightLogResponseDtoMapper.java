@@ -2,6 +2,7 @@ package golf.flogbackend.domain.flightLog.support;
 
 import golf.flogbackend.domain.crew.entity.Crew;
 import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
+import golf.flogbackend.domain.flightLog.dto.FlightLogSummaryResponseDto;
 import golf.flogbackend.domain.flightLog.entity.Aircraft;
 import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
@@ -101,6 +102,22 @@ public class FlightLogResponseDtoMapper {
                 .distance(buildDistanceDto(flightLog.getDistance()))
                 .flightTime(new FlightLogResponseDto.FlightTimeDto(flightLog.getFlightTime()))
                 .etcInfo(buildEtcInfoDto(flightLog, crewList))
+                .build();
+    }
+
+    public static FlightLogSummaryResponseDto buildFlightLogSummaryResponseDto(FlightLog flightLog) {
+        return FlightLogSummaryResponseDto.builder()
+                .flightId(flightLog.getFlightId())
+                .flightDate(flightLog.getFlightDate())
+                .flightTime(new FlightLogResponseDto.FlightTimeDto(flightLog.getFlightTime()))
+                .airline(flightLog.getAirline())
+                .aircraftType(flightLog.getAircraft().getAircraftType())
+                .departure(new FlightLogSummaryResponseDto.DepartureDto(
+                        flightLog.getDeparture().getAirportCode(),
+                        flightLog.getDeparture().getActualTimeLocal()))
+                .arrival(new FlightLogSummaryResponseDto.ArrivalDto(
+                        flightLog.getArrival().getAirportCode(),
+                        flightLog.getArrival().getActualTimeLocal()))
                 .build();
     }
 }
