@@ -8,19 +8,9 @@ import golf.flogbackend.domain.flightLog.entity.FlightLog;
 
 import java.util.List;
 
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
+
 public class FlightLogResponseDtoMapper {
-
-    public enum EndpointEnum {
-        DEPARTURE,
-        ARRIVAL
-    }
-
-    private static FlightEndpoint getEndpoint(FlightLog flightLog, EndpointEnum endpoint) {
-        return switch (endpoint) {
-            case DEPARTURE -> flightLog.getDeparture();
-            case ARRIVAL -> flightLog.getArrival();
-        };
-    }
 
     public static FlightLogResponseDto.ScheduledTimeDto buildScheduledTimeDto(EndpointEnum endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
