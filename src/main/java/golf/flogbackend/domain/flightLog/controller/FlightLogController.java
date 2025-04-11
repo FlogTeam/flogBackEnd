@@ -18,14 +18,14 @@ public class FlightLogController {
     private final FlightLogService flightLogService;
 
     @PostMapping("/flight-log")
-    public ResponseEntity<FlightLogResponseDto.StepOneResponseDto> addFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                                                @RequestBody SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
+    public ResponseEntity<FlightLogResponseDto.FlightLogSaveResponseDto> addFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                                      @RequestBody SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
         return flightLogService.saveFlightLogStepOne(userDetails.getMember(), saveFlightLogRequestDto);
     }
 
     @PutMapping("/flight-log")
-    public ResponseEntity<FlightLogResponseDto.AggregateDto> saveFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetail,
-                                                                           @RequestBody UpdateFlightLogRequestDto updateFlightLogRequestDto) {
+    public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto> saveFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetail,
+                                                                                  @RequestBody UpdateFlightLogRequestDto updateFlightLogRequestDto) {
         return flightLogService.updateFlightLog(userDetail.getMember(), updateFlightLogRequestDto);
     }
 }

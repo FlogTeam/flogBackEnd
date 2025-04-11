@@ -11,47 +11,15 @@ import java.util.TimeZone;
 
 @Getter
 public class FlightLogResponseDto {
-    @Getter
-    @Builder
-    public static class ScheduledTimeDto {
-        private LocalTime scheduledTimeUtc;
-        private LocalTime scheduledTimeLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class ActualTimeDto {
-        private LocalTime actualTimeUtc;
-        private LocalTime actualTimeLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class DateInfoDto {
-        private LocalDate dateUtc;
-        private LocalDate dateLocal;
-    }
-
-    @Getter
-    @Builder
-    public static class LocationDto {
-        private Double longitude;
-        private Double latitude;
-    }
-
-    @Getter
-    @Builder
-    public static class AirportDto {
-        private String airportCode;
-        private String airportName;
-    }
-
-    @Getter
-    @Builder
-    public static class CountryDto {
-        private String countryCode;
-        private String countryName;
-    }
+    public record ScheduledTimeDto(LocalTime scheduledTimeUtc, LocalTime scheduledTimeLocal) {}
+    public record ActualTimeDto(LocalTime actualTimeUtc, LocalTime actualTimeLocal) {}
+    public record DateInfoDto(LocalDate dateUtc, LocalDate dateLocal) {}
+    public record LocationDto(Double latitude, Double longitude) {}
+    public record AirportDto(String airportCode, String airportName) {}
+    public record CountryDto(String countryCode, String countryName) {}
+    public record AircraftDto(String aircraftNumber, String aircraftType) {}
+    public record FlightInfoDto(String flightId, String airline) {}
+    public record CrewDto(String crewName) {}
 
     @Getter
     @Builder
@@ -79,53 +47,9 @@ public class FlightLogResponseDto {
 
     @Getter
     @Builder
-    public static class AircraftDto {
-        private String aircraftNumber;
-        private String aircraftType;
-    }
-
-    @Getter
-    @Builder
-    public static class FlightInfoDto {
-        private String flightId;
-        private String airline;
-    }
-
-    @Getter
-    @Builder
-    public static class CrewDto {
-        private String crewName;
-    }
-
-    @Getter
-    @Builder
     public static class EtcInfoDto {
         private String duty;
         private List<CrewDto> crewMembers;
-    }
-
-    @Getter
-    @Builder
-    public static class StepOneResponseDto {
-        private Long flightLogId;
-        private FlightInfoDto flightInfo;
-        private DepartureDto departure;
-        private ArrivalDto arrival;
-        private AircraftDto aircraft;
-    }
-
-    @Getter
-    @Builder
-    public static class AggregateDto {
-        private Long flightLogId;
-        private String memberId;
-        private FlightInfoDto flightInfo;
-        private DepartureDto departure;
-        private ArrivalDto arrival;
-        private AircraftDto aircraft;
-        private DistanceDto distance;
-        private FlightTimeDto flightTime;
-        private EtcInfoDto etcInfo;
     }
 
     //summary
@@ -151,5 +75,27 @@ public class FlightLogResponseDto {
         private Double distanceMiles;
     }
 
+    @Getter
+    @Builder
+    public static class FlightLogSaveResponseDto {
+        private Long flightLogId;
+        private FlightInfoDto flightInfo;
+        private DepartureDto departure;
+        private ArrivalDto arrival;
+        private AircraftDto aircraft;
+    }
 
+    @Getter
+    @Builder
+    public static class FlightLogAllInfoDto {
+        private Long flightLogId;
+        private String memberId;
+        private FlightInfoDto flightInfo;
+        private DepartureDto departure;
+        private ArrivalDto arrival;
+        private AircraftDto aircraft;
+        private DistanceDto distance;
+        private FlightTimeDto flightTime;
+        private EtcInfoDto etcInfo;
+    }
 }
