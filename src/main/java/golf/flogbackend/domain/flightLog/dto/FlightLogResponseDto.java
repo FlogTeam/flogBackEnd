@@ -15,8 +15,10 @@ public class FlightLogResponseDto {
     public record ActualTimeDto(LocalTime actualTimeUtc, LocalTime actualTimeLocal) {}
     public record DateInfoDto(LocalDate dateUtc, LocalDate dateLocal) {}
     public record LocationDto(Double latitude, Double longitude) {}
-    public record AirportDto(String airportCode, String airportName) {}
-    public record CountryDto(String countryCode, String countryName) {}
+    public record CityDto(String cityCode, String cityName) {}
+    public record AirportDto(String airportCode, String airportName, String airportNameKorean) {}
+    public record CountryDto(String countryCode, String countryName,
+                             String countryNameKorean, String region) {}
     public record AircraftDto(String aircraftNumber, String aircraftType) {}
     public record FlightInfoDto(String flightId, String airline) {}
     public record CrewDto(String crewName) {}
@@ -31,6 +33,7 @@ public class FlightLogResponseDto {
         private ScheduledTimeDto scheduledTime;
         private ActualTimeDto actualTime;
         private CountryDto country;
+        private CityDto city;
     }
 
     @Getter
@@ -43,6 +46,7 @@ public class FlightLogResponseDto {
         private ScheduledTimeDto scheduledTime;
         private ActualTimeDto actualTime;
         private CountryDto country;
+        private CityDto city;
     }
 
     @Getter
@@ -52,7 +56,6 @@ public class FlightLogResponseDto {
         private List<CrewDto> crewMembers;
     }
 
-    //summary
     @Getter
     public static class FlightTimeDto {
         private int hours;

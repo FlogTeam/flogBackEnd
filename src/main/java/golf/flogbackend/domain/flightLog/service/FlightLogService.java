@@ -3,19 +3,15 @@ package golf.flogbackend.domain.flightLog.service;
 import golf.flogbackend.domain.airport.entity.Airport;
 import golf.flogbackend.domain.airport.repository.AirportRepository;
 import golf.flogbackend.domain.country.entity.Country;
-import golf.flogbackend.domain.country.repository.CountryRepository;
 import golf.flogbackend.domain.crew.entity.Crew;
 import golf.flogbackend.domain.crew.repository.CrewRepository;
 import golf.flogbackend.domain.flightLog.dto.SaveFlightLogRequestDto;
 import golf.flogbackend.domain.flightLog.dto.UpdateFlightLogRequestDto;
 import golf.flogbackend.domain.flightLog.entity.*;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
-import golf.flogbackend.domain.flightLog.support.EndpointEnum;
-import golf.flogbackend.domain.flightLog.support.FlightEndpoint;
 import golf.flogbackend.domain.flightLog.support.FlightLogUtil;
 import golf.flogbackend.domain.member.entity.Member;
 import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -37,20 +33,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
-import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
-import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogAllInfoDto;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
-import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
+import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
 
 
 @Service
 @RequiredArgsConstructor
 public class FlightLogService {
+    private final AirportRepository airportRepository;
     @Value("${api.key}")
     private String apiKey;
     private final FlightLogRepository flightLogRepository;
-    private final CountryRepository countryRepository;
     private final CrewRepository crewRepository;
     private final FlightLogUtil flightLogUtil;
 
@@ -109,6 +104,10 @@ public class FlightLogService {
         ZonedDateTime arrivalPredictedLocal = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("predictedTime")).get("local"), formatter);
         ZonedDateTime arrivalPredictedUtc = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("predictedTime")).get("utc"), formatter);
 
+        Airport depAirport = flightLogUtil.findAirportByCode((String) depAirportData.get("iata"));
+        Airport arriAirport = flightLogUtil.findAirportByCode((String) arrivalAirportData.get("iata"));
+        Country depCountry = flightLogUtil.findCountryByCode(depCountryCode);
+        Country arriCountry = flightLogUtil.findCountryByCode(arrivalCountryCode);
 
         FlightLog flightLog = flightLogRepository.save(FlightLog.builder()
                 .flightId(saveFlightLogRequestDto.getFlightId())
@@ -122,11 +121,16 @@ public class FlightLogService {
                         .scheduledTimeLocal(ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("local"), formatter).toLocalTime())
                         .airportLocationLat((Double) ((JSONObject) depAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) depAirportData.get("location")).get("lon"))
-                        .airportCode((String) depAirportData.get("iata"))
-                        .airportName((String) depAirportData.get("name"))
+                        .airportCode(depAirport.getCode())
+                        .airportName(depAirport.getAirportName())
+                        .airportNameKorean(depAirport.getAirportNameKorean())
                         .airportTimezone(TimeZone.getTimeZone((String) depAirportData.get("timeZone")))
                         .countryCode(depCountryCode)
-                        .countryName(flightLogUtil.findCountryByCode(depCountryCode).getCountryName())
+                        .countryName(depCountry.getCountryName())
+                        .countryNameKorean(depCountry.getCountryNameKorean())
+                        .region(depCountry.getRegion())
+                        .cityCode(depAirport.getCityCode())
+                        .cityName(depAirport.getCityName())
                         .build())
                 .arrival(Arrival.builder()
                         .dateUtc(arrivalPredictedUtc.toLocalDate())
@@ -135,11 +139,16 @@ public class FlightLogService {
                         .scheduledTimeLocal(ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("local"), formatter).toLocalTime())
                         .airportLocationLat((Double) ((JSONObject) arrivalAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) arrivalAirportData.get("location")).get("lon"))
-                        .airportCode((String) arrivalAirportData.get("iata"))
-                        .airportName((String) arrivalAirportData.get("name"))
+                        .airportCode(arriAirport.getCode())
+                        .airportName(arriAirport.getAirportName())
+                        .airportNameKorean(arriAirport.getAirportNameKorean())
                         .airportTimezone(TimeZone.getTimeZone((String) arrivalAirportData.get("timeZone")))
                         .countryCode(arrivalCountryCode)
-                        .countryName(flightLogUtil.findCountryByCode(arrivalCountryCode).getCountryName())
+                        .countryName(arriCountry.getCountryName())
+                        .countryNameKorean(arriCountry.getCountryNameKorean())
+                        .region(arriCountry.getRegion())
+                        .cityCode(arriAirport.getCityCode())
+                        .cityName(arriAirport.getCityName())
                         .build())
                 .aircraft(Aircraft.builder()
                         .aircraftNumber((String) aircraftData.get("reg"))
@@ -151,6 +160,7 @@ public class FlightLogService {
                         .miles((Double) greatCircleDistanceData.get("mile"))
                         .build())
                 .build());
+
 
         return ResponseEntity.ok(FlightLogSaveResponseDto.builder()
                 .flightLogId(flightLog.getId())
@@ -224,13 +234,17 @@ public class FlightLogService {
                 throw new IllegalArgumentException("DepAirportCode and ArrivalAirportCode cannot be the same");
             if (!setDepAirportCode.equals(getDepAirportCode)) {
                 Airport airport = flightLogUtil.findAirportByCode(setDepAirportCode);
+                Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
                 departure = departure.toBuilder()
                         .airportCode(airport.getCode())
-                        .airportName(airport.getName())
+                        .airportName(airport.getAirportName())
+                        .airportNameKorean(airport.getAirportNameKorean())
+                        .cityCode(airport.getCityCode())
+                        .cityName(airport.getCityName())
                         .countryCode(airport.getCountryCode())
-                        .countryName(countryRepository.findById(airport.getCountryCode())
-                                .orElseThrow(EntityNotFoundException::new)
-                                .getCountryName())
+                        .countryName(country.getCountryName())
+                        .countryNameKorean(country.getCountryNameKorean())
+                        .region(country.getRegion())
                         .airportLocationLon(airport.getLon())
                         .airportLocationLat(airport.getLat())
                         .airportTimezone(airport.getTimeZone())
@@ -239,13 +253,17 @@ public class FlightLogService {
         }
         if (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode)) {
             Airport airport = flightLogUtil.findAirportByCode(setArrivalAirportCode);
+            Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
             arrival = arrival.toBuilder()
                     .airportCode(airport.getCode())
-                    .airportName(airport.getName())
+                    .airportName(airport.getAirportName())
+                    .airportNameKorean(airport.getAirportNameKorean())
+                    .cityCode(airport.getCityCode())
+                    .cityName(airport.getCityName())
                     .countryCode(airport.getCountryCode())
-                    .countryName(countryRepository.findById(airport.getCountryCode())
-                            .orElseThrow(EntityNotFoundException::new)
-                            .getCountryName())
+                    .countryName(country.getCountryName())
+                    .countryNameKorean(country.getCountryNameKorean())
+                    .region(country.getRegion())
                     .airportLocationLon(airport.getLon())
                     .airportLocationLat(airport.getLat())
                     .airportTimezone(airport.getTimeZone())
