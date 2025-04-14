@@ -303,7 +303,7 @@ public class FlightLogService {
 
         flightLogRepository.save(flightLog);
 
-        return ResponseEntity.ok(buildAggregateDto(flightLog,
+        return ResponseEntity.ok(buildFlightLogAllInfoDto(flightLog,
                 updateFlightLogRequestDto.getCrewMembers() != null ? crewRepository.saveAll(updateFlightLogRequestDto.getCrewMembers()
                         .stream().map(s -> Crew.builder()
                                 .name(s)

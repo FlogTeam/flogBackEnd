@@ -101,7 +101,7 @@ public class FlightLogResponseDtoMapper {
                 .build();
     }
 
-    public static FlightLogResponseDto.FlightLogAllInfoDto buildAggregateDto(FlightLog flightLog, List<Crew> crewList) {
+    public static FlightLogResponseDto.FlightLogAllInfoDto buildFlightLogAllInfoDto(FlightLog flightLog, List<Crew> crewList) {
         return FlightLogResponseDto.FlightLogAllInfoDto.builder()
                 .flightLogId(flightLog.getId())
                 .memberId(flightLog.getMemberId())
