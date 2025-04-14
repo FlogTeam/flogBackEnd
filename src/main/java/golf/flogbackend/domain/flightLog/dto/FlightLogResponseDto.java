@@ -62,11 +62,17 @@ public class FlightLogResponseDto {
         private int minutes;
         private int seconds;
 
-        public FlightTimeDto(long totalSeconds) {
-            this.hours = (int) (totalSeconds / 3600);
-            int remainingSeconds = (int) (totalSeconds % 3600);
-            this.minutes = remainingSeconds / 60;
-            this.seconds = remainingSeconds % 60;
+        public FlightTimeDto(Long totalSeconds) {
+            if (totalSeconds == null) {
+                this.hours = 0;
+                this.minutes = 0;
+                this.seconds = 0;
+            } else {
+                this.hours = (int) (totalSeconds / 3600);
+                int remainingSeconds = (int) (totalSeconds % 3600);
+                this.minutes = remainingSeconds / 60;
+                this.seconds = remainingSeconds % 60;
+            }
         }
     }
 
