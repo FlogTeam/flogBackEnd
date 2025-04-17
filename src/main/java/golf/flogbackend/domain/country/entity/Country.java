@@ -14,4 +14,6 @@ public class Country {
     private String countryName;
     @Column
     private String countryNameKorean;
+    @Column
+    private String region;
 }

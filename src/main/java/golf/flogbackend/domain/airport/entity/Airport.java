@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.TimeZone;
 
@@ -13,17 +12,20 @@ import java.util.TimeZone;
 public class Airport {
     @Id
     private String code;
-
+    @Column
+    private String airportName;
+    @Column
+    private String airportNameKorean;
     @Column
     private String countryCode;
     @Column
     private String cityCode;
     @Column
-    private String name;
+    private String cityName;
     @Column
     private Double lon;
     @Column
     private Double lat;
-    @Column @Setter
+    @Column
     private TimeZone timeZone;
 }

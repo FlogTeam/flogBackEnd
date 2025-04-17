@@ -6,20 +6,32 @@ import lombok.Getter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 
 @Getter
 public class FlightLogResponseDto {
-    public record ScheduledTimeDto(LocalTime scheduledTimeUtc, LocalTime scheduledTimeLocal) {}
-    public record ActualTimeDto(LocalTime actualTimeUtc, LocalTime actualTimeLocal) {}
-    public record DateInfoDto(LocalDate dateUtc, LocalDate dateLocal) {}
+    public record ScheduledTimeDto(LocalTime utc, LocalTime local) {}
+    public record ActualTimeDto(LocalTime utc, LocalTime local) {}
+    public record DateInfoDto(LocalDate utc, LocalDate local) {}
     public record LocationDto(Double latitude, Double longitude) {}
-    public record AirportDto(String airportCode, String airportName) {}
-    public record CountryDto(String countryCode, String countryName) {}
-    public record AircraftDto(String aircraftNumber, String aircraftType) {}
+    public record CityDto(String code, String name) {}
+    public record AirportDto(String code, String name, String nameKorean) {}
+    public record CountryDto(String code, String name, String nameKorean, String region) {}
+    public record AircraftDto(String number, String type) {}
     public record FlightInfoDto(String flightId, String airline) {}
     public record CrewDto(String crewName) {}
+
+    @Getter
+    @Builder
+    public static class FlightLogDataDto {
+        private Long workDays;
+        private Long legCount;
+        private Long dhCount;
+        private FlightTimeDto totalFlightTime;
+        Map<String, Map<String, Long>> dutyByAircraftType;
+    }
 
     @Getter
     @Builder
@@ -31,6 +43,7 @@ public class FlightLogResponseDto {
         private ScheduledTimeDto scheduledTime;
         private ActualTimeDto actualTime;
         private CountryDto country;
+        private CityDto city;
     }
 
     @Getter
@@ -43,6 +56,7 @@ public class FlightLogResponseDto {
         private ScheduledTimeDto scheduledTime;
         private ActualTimeDto actualTime;
         private CountryDto country;
+        private CityDto city;
     }
 
     @Getter
@@ -52,27 +66,32 @@ public class FlightLogResponseDto {
         private List<CrewDto> crewMembers;
     }
 
-    //summary
     @Getter
     public static class FlightTimeDto {
         private int hours;
         private int minutes;
         private int seconds;
 
-        public FlightTimeDto(long totalSeconds) {
-            this.hours = (int) (totalSeconds / 3600);
-            int remainingSeconds = (int) (totalSeconds % 3600);
-            this.minutes = remainingSeconds / 60;
-            this.seconds = remainingSeconds % 60;
+        public FlightTimeDto(Long totalSeconds) {
+            if (totalSeconds == null) {
+                this.hours = 0;
+                this.minutes = 0;
+                this.seconds = 0;
+            } else {
+                this.hours = (int) (totalSeconds / 3600);
+                int remainingSeconds = (int) (totalSeconds % 3600);
+                this.minutes = remainingSeconds / 60;
+                this.seconds = remainingSeconds % 60;
+            }
         }
     }
 
     @Getter
     @Builder
     public static class DistanceDto {
-        private Double distanceKilometers;
-        private Double distanceMeters;
-        private Double distanceMiles;
+        private Double kilometers;
+        private Double meters;
+        private Double miles;
     }
 
     @Getter

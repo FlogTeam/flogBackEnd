@@ -1,6 +1,5 @@
 package golf.flogbackend.domain.member.entity;
 
-import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

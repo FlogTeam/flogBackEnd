@@ -27,9 +27,19 @@ public class Arrival implements FlightEndpoint {
     @Column
     private String airportName;
     @Column
+    private String airportNameKorean;
+    @Column
+    private String cityCode;
+    @Column
+    private String cityName;
+    @Column
     private String countryCode;
     @Column
     private String countryName;
+    @Column
+    private String countryNameKorean;
+    @Column
+    private String region;
     @Column
     private Double airportLocationLon;
     @Column

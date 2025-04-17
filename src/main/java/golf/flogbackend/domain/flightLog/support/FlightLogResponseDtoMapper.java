@@ -8,6 +8,7 @@ import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 
 import java.util.List;
+import java.util.Map;
 
 import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
 
@@ -30,7 +31,14 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.AirportDto buildAirportDto(EndpointEnum endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
-        return new FlightLogResponseDto.AirportDto(flightEndpoint.getAirportCode(), flightEndpoint.getAirportName());
+        return new FlightLogResponseDto.AirportDto(flightEndpoint.getAirportCode(), flightEndpoint.getAirportName(),
+                flightEndpoint.getAirportNameKorean()
+        );
+    }
+
+    public static FlightLogResponseDto.CityDto buildCityDto(EndpointEnum endpoint, FlightLog flightLog) {
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.CityDto(flightEndpoint.getCityCode(), flightEndpoint.getCityName());
     }
 
     public static FlightLogResponseDto.LocationDto buildLocationDto(EndpointEnum endpoint, FlightLog flightLog) {
@@ -40,7 +48,8 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.CountryDto buildCountryDto(EndpointEnum endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
-        return new FlightLogResponseDto.CountryDto(flightEndpoint.getCountryCode(), flightEndpoint.getCountryName());
+        return new FlightLogResponseDto.CountryDto(flightEndpoint.getCountryCode(), flightEndpoint.getCountryName(),
+                flightEndpoint.getCountryNameKorean(), flightEndpoint.getRegion());
     }
 
     public static FlightLogResponseDto.FlightInfoDto buildFlightInfoDto(FlightLog flightLog) {
@@ -53,9 +62,9 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.DistanceDto buildDistanceDto(Distance distance) {
         return FlightLogResponseDto.DistanceDto.builder()
-                .distanceKilometers(distance.getKilometers())
-                .distanceMeters(distance.getMeters())
-                .distanceMiles(distance.getMiles())
+                .kilometers(distance.getKilometers())
+                .meters(distance.getMeters())
+                .miles(distance.getMiles())
                 .build();
     }
 
@@ -72,6 +81,7 @@ public class FlightLogResponseDtoMapper {
                 .dateInfo(buildDateInfoDto(EndpointEnum.DEPARTURE, flightLog))
                 .airport(buildAirportDto(EndpointEnum.DEPARTURE, flightLog))
                 .country(buildCountryDto(EndpointEnum.DEPARTURE, flightLog))
+                .city(buildCityDto(EndpointEnum.DEPARTURE, flightLog))
                 .location(buildLocationDto(EndpointEnum.DEPARTURE, flightLog))
                 .timeZone(flightLog.getDeparture().getAirportTimezone())
                 .scheduledTime(buildScheduledTimeDto(EndpointEnum.DEPARTURE, flightLog))
@@ -84,6 +94,7 @@ public class FlightLogResponseDtoMapper {
                 .dateInfo(buildDateInfoDto(EndpointEnum.ARRIVAL, flightLog))
                 .airport(buildAirportDto(EndpointEnum.ARRIVAL, flightLog))
                 .country(buildCountryDto(EndpointEnum.ARRIVAL, flightLog))
+                .city(buildCityDto(EndpointEnum.ARRIVAL, flightLog))
                 .location(buildLocationDto(EndpointEnum.ARRIVAL, flightLog))
                 .timeZone(flightLog.getArrival().getAirportTimezone())
                 .scheduledTime(buildScheduledTimeDto(EndpointEnum.ARRIVAL, flightLog))
@@ -91,7 +102,7 @@ public class FlightLogResponseDtoMapper {
                 .build();
     }
 
-    public static FlightLogResponseDto.FlightLogAllInfoDto buildAggregateDto(FlightLog flightLog, List<Crew> crewList) {
+    public static FlightLogResponseDto.FlightLogAllInfoDto buildFlightLogAllInfoDto(FlightLog flightLog, List<Crew> crewList) {
         return FlightLogResponseDto.FlightLogAllInfoDto.builder()
                 .flightLogId(flightLog.getId())
                 .memberId(flightLog.getMemberId())
@@ -107,6 +118,7 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogSummaryResponseDto buildFlightLogSummaryResponseDto(FlightLog flightLog) {
         return FlightLogSummaryResponseDto.builder()
+                .flightLogId(flightLog.getId())
                 .flightId(flightLog.getFlightId())
                 .flightDate(flightLog.getFlightDate())
                 .flightTime(new FlightLogResponseDto.FlightTimeDto(flightLog.getFlightTime()))
@@ -118,6 +130,16 @@ public class FlightLogResponseDtoMapper {
                 .arrival(new FlightLogSummaryResponseDto.ArrivalDto(
                         flightLog.getArrival().getAirportCode(),
                         flightLog.getArrival().getActualTimeLocal()))
+                .build();
+    }
+
+    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(FlightData stats, Map<String, Map<String, Long>> dutyByAircraftType) {
+        return FlightLogResponseDto.FlightLogDataDto.builder()
+                .workDays(stats.getWorkDays())
+                .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(stats.getTotalFlightTime()))
+                .legCount(stats.getLegCount())
+                .dhCount(stats.getDhCount())
+                .dutyByAircraftType(dutyByAircraftType)
                 .build();
     }
 }

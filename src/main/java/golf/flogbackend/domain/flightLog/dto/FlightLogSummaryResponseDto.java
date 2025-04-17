@@ -10,6 +10,7 @@ import java.time.LocalTime;
 @Builder
 @Getter
 public class FlightLogSummaryResponseDto {
+    private Long flightLogId;
     private String flightId;
     private LocalDate flightDate;
     private FlightLogResponseDto.FlightTimeDto flightTime;
