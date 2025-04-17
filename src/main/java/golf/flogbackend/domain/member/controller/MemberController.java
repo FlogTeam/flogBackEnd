@@ -18,7 +18,7 @@ public class MemberController {
     private final MemberService memberService;
 
     @GetMapping("/check-mail")
-    public ResponseEntity<String> checkMail(@RequestParam String mail) {
+    public ResponseEntity<String> checkMail(@RequestParam("mail") String mail) {
         return memberService.checkEmail(mail);
     }
 
