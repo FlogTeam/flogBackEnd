@@ -1,7 +1,6 @@
 package golf.flogbackend.domain.flightLog.service;
 
 import golf.flogbackend.domain.airport.entity.Airport;
-import golf.flogbackend.domain.airport.repository.AirportRepository;
 import golf.flogbackend.domain.country.entity.Country;
 import golf.flogbackend.domain.crew.entity.Crew;
 import golf.flogbackend.domain.crew.repository.CrewRepository;
@@ -19,10 +18,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -76,21 +72,23 @@ public class FlightLogService {
         URI uri = URI.create(apiUrl.toString());
 
         ResponseEntity<String> flightData;
+        String body;
         try {
             flightData = restTemplate.exchange(
                     uri,
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     String.class);
+            if (flightData.getBody() != null)
+                body = flightData.getBody().substring(1, flightData.getBody().length() - 1);
+            else throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
 
-        } catch (HttpClientErrorException.BadRequest b) {
-            throw new EntityNotFoundException("검색 실패 : " + flightId + " / "  + flightDate);
+        } catch (HttpClientErrorException b) {
+            throw new EntityNotFoundException("검색 실패 : " + flightId + " / " + flightDate);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
         }
-
-        String body = flightData.getBody().substring(1, flightData.getBody().length() - 1);
 
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObj = (JSONObject) jsonParser.parse(body);
@@ -116,6 +114,12 @@ public class FlightLogService {
         ZonedDateTime arrivalScheduleUtc = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("utc"), formatter);
         ZonedDateTime arrivalScheduleLocal = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("local"), formatter);
 
+        LocalTime depScheduleTimeUtc = depScheduleUtc.toLocalTime();
+        LocalTime depScheduleTimeLocal = depScheduleLocal.toLocalTime();
+
+        LocalTime arrivalScheduleTimeUtc = arrivalScheduleUtc.toLocalTime();
+        LocalTime arrivalScheduleTimeLocal = arrivalScheduleLocal.toLocalTime();
+
         Airport depAirport = flightLogUtil.findAirportByCode((String) depAirportData.get("iata"));
         Airport arriAirport = flightLogUtil.findAirportByCode((String) arrivalAirportData.get("iata"));
         Country depCountry = flightLogUtil.findCountryByCode(depCountryCode);
@@ -129,8 +133,10 @@ public class FlightLogService {
                 .departure(Departure.builder()
                         .dateUtc(depScheduleUtc.toLocalDate())
                         .dateLocal(depScheduleLocal.toLocalDate())
-                        .scheduledTimeUtc(depScheduleUtc.toLocalTime())
-                        .scheduledTimeLocal(depScheduleLocal.toLocalTime())
+                        .scheduledTimeUtc(depScheduleTimeUtc)
+                        .scheduledTimeLocal(depScheduleTimeLocal)
+                        .actualTimeUtc(depScheduleTimeUtc)
+                        .actualTimeLocal(depScheduleTimeLocal)
                         .airportLocationLat((Double) ((JSONObject) depAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) depAirportData.get("location")).get("lon"))
                         .airportCode(depAirport.getCode())
@@ -147,8 +153,10 @@ public class FlightLogService {
                 .arrival(Arrival.builder()
                         .dateUtc(arrivalScheduleUtc.toLocalDate())
                         .dateLocal(arrivalScheduleLocal.toLocalDate())
-                        .scheduledTimeUtc(arrivalScheduleUtc.toLocalTime())
-                        .scheduledTimeLocal(arrivalScheduleLocal.toLocalTime())
+                        .scheduledTimeUtc(arrivalScheduleTimeUtc)
+                        .scheduledTimeLocal(arrivalScheduleTimeLocal)
+                        .actualTimeUtc(arrivalScheduleTimeUtc)
+                        .actualTimeLocal(arrivalScheduleTimeLocal)
                         .airportLocationLat((Double) ((JSONObject) arrivalAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) arrivalAirportData.get("location")).get("lon"))
                         .airportCode(arriAirport.getCode())
@@ -171,6 +179,7 @@ public class FlightLogService {
                         .meters((Double) greatCircleDistanceData.get("meter"))
                         .miles((Double) greatCircleDistanceData.get("mile"))
                         .build())
+                .flightTime(Duration.between(depScheduleUtc, arrivalScheduleUtc).toSeconds())
                 .build());
 
 
