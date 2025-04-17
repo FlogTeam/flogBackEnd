@@ -1,14 +1,13 @@
 package golf.flogbackend.security.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import golf.flogbackend.domain.member.entity.Member;
 import golf.flogbackend.domain.member.repository.MemberRepository;
 import golf.flogbackend.redis.RedisUtil;
+import io.jsonwebtoken.security.InvalidKeyException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -17,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 import static golf.flogbackend.security.jwt.JwtUtil.ACCESS_KEY;
 import static golf.flogbackend.security.jwt.JwtUtil.REFRESH_KEY;
@@ -51,8 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 redisUtil.set(email, newRefreshToken, refreshTokenTime);
                 jwtUtil.setHeaderToken(response, newAccessToken, newRefreshToken);
             } else {
-                jwtExceptionHandler(response, "Invalid Refresh Token");
-                return;
+                throw new InvalidKeyException("인증 실패");
             }
         }
         filterChain.doFilter(request, response);
@@ -64,16 +64,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         context.setAuthentication(authentication);
 
         SecurityContextHolder.setContext(context);
-    }
-
-    public void jwtExceptionHandler(HttpServletResponse response, String msg) {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        try {
-            String json = new ObjectMapper().writeValueAsString(msg);
-            response.getWriter().write(json);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
     }
 }

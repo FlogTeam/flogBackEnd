@@ -1,6 +1,7 @@
 package golf.flogbackend.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.jsonwebtoken.security.InvalidKeyException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.security.InvalidParameterException;
@@ -90,6 +91,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = IllegalStateException.class)
     public ResponseEntity<Message> handleIllegalStateException(IllegalStateException e) {
+        return new ResponseEntity<>(new Message(e.getClass().toString(), e.getMessage(), LocalDateTime.now()),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = InvalidKeyException.class)
+    public ResponseEntity<Message> handleInvalidKeyException(InvalidKeyException e) {
         return new ResponseEntity<>(new Message(e.getClass().toString(), e.getMessage(), LocalDateTime.now()),
                 HttpStatus.BAD_REQUEST);
     }
