@@ -11,16 +11,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.attribute.UserPrincipal;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class MemberController {
     private final MemberService memberService;
 
+    @GetMapping("/check-mail")
+    public ResponseEntity<String> checkMail(@RequestParam String mail) {
+        return memberService.checkEmail(mail);
+    }
+
     @PostMapping("/signup")
-    public ResponseEntity<Object> signup(@RequestBody SignupRequestDto signupRequestDto) {
+    public ResponseEntity<String> signup(@RequestBody SignupRequestDto signupRequestDto) {
         return memberService.signup(signupRequestDto);
     }
 
@@ -30,7 +33,7 @@ public class MemberController {
     }
 
     @GetMapping("/mail")
-    public ResponseEntity<String>  mailSend(@AuthenticationPrincipal UserDetailsImpl userPrincipal) throws MessagingException {
+    public ResponseEntity<String> mailSend(@AuthenticationPrincipal UserDetailsImpl userPrincipal) throws MessagingException {
         return memberService.mailSend(userPrincipal.getMember());
     }
 

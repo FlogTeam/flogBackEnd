@@ -12,7 +12,6 @@ import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.InvalidParameterException;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -34,12 +34,18 @@ public class MemberService {
     private final JwtUtil jwtUtil;
     private final RedisUtil redisUtil;
 
-    @Transactional
-    public ResponseEntity<Object> signup(SignupRequestDto signupRequestDto) {
-        if (memberRepository.existsById(signupRequestDto.getEmail())) throw new EntityExistsException("EMAIL_ALREADY_EXISTS");
-        memberRepository.save(new Member(signupRequestDto.getEmail(), signupRequestDto.getPassword()));
+    public ResponseEntity<String> checkEmail(String email) {
+        if (findMemberByEmail(email).isPresent()) throw new EntityExistsException("EMAIL_ALREADY_EXISTS : " + email);
+        return ResponseEntity.ok("이메일 중복 확인 완료");
+    }
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+    @Transactional
+    public ResponseEntity<String> signup(SignupRequestDto signupRequestDto) {
+        if (findMemberByEmail(signupRequestDto.getEmail()).isPresent())
+            throw new EntityExistsException("EMAIL_ALREADY_EXISTS : " + signupRequestDto.getEmail());
+        memberRepository.save(new Member(signupRequestDto.getEmail(), passwordEncoder.encode(signupRequestDto.getPassword())));
+
+        return ResponseEntity.ok("회원 가입 성공");
     }
 
     @Transactional(readOnly = true)
@@ -49,9 +55,7 @@ public class MemberService {
                 () -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. email : " + email)
         );
 
-        System.out.println(member.getPassword());
-        System.out.println(loginRequestDto.getPassword());
-        if (passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
+        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
             throw new InvalidParameterException("비밀번호를 틀렸습니다.");
         }
 
@@ -66,5 +70,9 @@ public class MemberService {
     public ResponseEntity<String> mailSend(Member member) throws MessagingException {
         emailSender.send(member.getEmail(), UUID.randomUUID().toString().substring(0, 8));
         return ResponseEntity.ok("");
+    }
+
+    private Optional<Member> findMemberByEmail(String email) {
+        return memberRepository.findById(email);
     }
 }
