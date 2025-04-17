@@ -61,9 +61,9 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.DistanceDto buildDistanceDto(Distance distance) {
         return FlightLogResponseDto.DistanceDto.builder()
-                .distanceKilometers(distance.getKilometers())
-                .distanceMeters(distance.getMeters())
-                .distanceMiles(distance.getMiles())
+                .kilometers(distance.getKilometers())
+                .meters(distance.getMeters())
+                .miles(distance.getMiles())
                 .build();
     }
 
@@ -117,6 +117,7 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogSummaryResponseDto buildFlightLogSummaryResponseDto(FlightLog flightLog) {
         return FlightLogSummaryResponseDto.builder()
+                .flightLogId(flightLog.getId())
                 .flightId(flightLog.getFlightId())
                 .flightDate(flightLog.getFlightDate())
                 .flightTime(new FlightLogResponseDto.FlightTimeDto(flightLog.getFlightTime()))
