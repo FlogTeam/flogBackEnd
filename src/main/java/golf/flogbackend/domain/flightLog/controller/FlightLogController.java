@@ -23,9 +23,9 @@ public class FlightLogController {
     private final FlightLogGetService flightLogGetService;
 
     @PostMapping("/flight-log")
-    public ResponseEntity<FlightLogResponseDto.FlightLogSaveResponseDto> addFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetails,
+    public ResponseEntity<FlightLogResponseDto.FlightLogSaveResponseDto> saveFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetails,
                                                                                       @RequestBody SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
-        return flightLogService.saveFlightLogStepOne(userDetails.getMember(), saveFlightLogRequestDto);
+        return flightLogService.saveFlightLog(userDetails.getMember(), saveFlightLogRequestDto);
     }
 
     @PutMapping("/flight-log")

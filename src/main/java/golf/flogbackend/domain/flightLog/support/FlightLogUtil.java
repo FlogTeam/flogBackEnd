@@ -19,7 +19,8 @@ public class FlightLogUtil {
     private final FlightLogRepository flightLogRepository;
 
     public FlightLog findFlightLogById(Long flightLogId) {
-        return flightLogRepository.findById(flightLogId).orElseThrow(EntityNotFoundException::new);
+        return flightLogRepository.findById(flightLogId).orElseThrow(
+                () -> new EntityNotFoundException("존재하지 않는 flight log id : "  + flightLogId));
     }
 
     public Airport findAirportByCode(String code) {

@@ -12,7 +12,9 @@ import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import golf.flogbackend.domain.flightLog.support.FlightLogUtil;
 import golf.flogbackend.domain.member.entity.Member;
 import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -23,6 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.util.StringUtils;
 
@@ -38,11 +41,10 @@ import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightL
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
 import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FlightLogService {
-    private final AirportRepository airportRepository;
     @Value("${api.key}")
     private String apiKey;
     private final FlightLogRepository flightLogRepository;
@@ -50,7 +52,7 @@ public class FlightLogService {
     private final FlightLogUtil flightLogUtil;
 
     @Transactional
-    public ResponseEntity<FlightLogSaveResponseDto> saveFlightLogStepOne(Member member, SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
+    public ResponseEntity<FlightLogSaveResponseDto> saveFlightLog(Member member, SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
         String flightId = saveFlightLogRequestDto.getFlightId();
         LocalDate flightDate = saveFlightLogRequestDto.getFlightDate();
 
@@ -70,13 +72,23 @@ public class FlightLogService {
                 .append(flightDate)
                 .append("/?dateLocalRole=Both");
 
+
         URI uri = URI.create(apiUrl.toString());
 
-        ResponseEntity<String> flightData = restTemplate.exchange(
-                uri,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                String.class);
+        ResponseEntity<String> flightData;
+        try {
+            flightData = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    String.class);
+
+        } catch (HttpClientErrorException.BadRequest b) {
+            throw new EntityNotFoundException("검색 실패 : " + flightId + " / "  + flightDate);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
+        }
 
         String body = flightData.getBody().substring(1, flightData.getBody().length() - 1);
 
@@ -99,10 +111,10 @@ public class FlightLogService {
         String arrivalCountryCode = (String) arrivalAirportData.get("countryCode");
 
 
-        ZonedDateTime depRunwayLocal = ZonedDateTime.parse((String) ((JSONObject) departureData.get("runwayTime")).get("local"), formatter);
-        ZonedDateTime depRunwayUtc = ZonedDateTime.parse((String) ((JSONObject) departureData.get("runwayTime")).get("utc"), formatter);
-        ZonedDateTime arrivalPredictedLocal = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("predictedTime")).get("local"), formatter);
-        ZonedDateTime arrivalPredictedUtc = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("predictedTime")).get("utc"), formatter);
+        ZonedDateTime depScheduleLocal = ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("local"), formatter);
+        ZonedDateTime depScheduleUtc = ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("utc"), formatter);
+        ZonedDateTime arrivalScheduleUtc = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("utc"), formatter);
+        ZonedDateTime arrivalScheduleLocal = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("local"), formatter);
 
         Airport depAirport = flightLogUtil.findAirportByCode((String) depAirportData.get("iata"));
         Airport arriAirport = flightLogUtil.findAirportByCode((String) arrivalAirportData.get("iata"));
@@ -115,10 +127,10 @@ public class FlightLogService {
                 .airline((String) ((JSONObject) jsonObj.get("airline")).get("name"))
                 .memberId(member.getEmail())
                 .departure(Departure.builder()
-                        .dateUtc(depRunwayUtc.toLocalDate())
-                        .dateLocal(depRunwayLocal.toLocalDate())
-                        .scheduledTimeUtc(ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("utc"), formatter).toLocalTime())
-                        .scheduledTimeLocal(ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("local"), formatter).toLocalTime())
+                        .dateUtc(depScheduleUtc.toLocalDate())
+                        .dateLocal(depScheduleLocal.toLocalDate())
+                        .scheduledTimeUtc(depScheduleUtc.toLocalTime())
+                        .scheduledTimeLocal(depScheduleLocal.toLocalTime())
                         .airportLocationLat((Double) ((JSONObject) depAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) depAirportData.get("location")).get("lon"))
                         .airportCode(depAirport.getCode())
@@ -133,10 +145,10 @@ public class FlightLogService {
                         .cityName(depAirport.getCityName())
                         .build())
                 .arrival(Arrival.builder()
-                        .dateUtc(arrivalPredictedUtc.toLocalDate())
-                        .dateLocal(arrivalPredictedLocal.toLocalDate())
-                        .scheduledTimeUtc(ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("utc"), formatter).toLocalTime())
-                        .scheduledTimeLocal(ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("local"), formatter).toLocalTime())
+                        .dateUtc(arrivalScheduleUtc.toLocalDate())
+                        .dateLocal(arrivalScheduleLocal.toLocalDate())
+                        .scheduledTimeUtc(arrivalScheduleUtc.toLocalTime())
+                        .scheduledTimeLocal(arrivalScheduleLocal.toLocalTime())
                         .airportLocationLat((Double) ((JSONObject) arrivalAirportData.get("location")).get("lat"))
                         .airportLocationLon((Double) ((JSONObject) arrivalAirportData.get("location")).get("lon"))
                         .airportCode(arriAirport.getCode())
@@ -231,7 +243,7 @@ public class FlightLogService {
 
         if (!StringUtils.isEmptyOrWhitespace(setDepAirportCode)) {
             if (setDepAirportCode.equals(setArrivalAirportCode))
-                throw new IllegalArgumentException("DepAirportCode and ArrivalAirportCode cannot be the same");
+                throw new IllegalArgumentException("출발지 공항 코드와 도착지 공항 코드가 같음. 출발지 : " + setDepAirportCode + ", 도착지 : " + setArrivalAirportCode);
             if (!setDepAirportCode.equals(getDepAirportCode)) {
                 Airport airport = flightLogUtil.findAirportByCode(setDepAirportCode);
                 Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
