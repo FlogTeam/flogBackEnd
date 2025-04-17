@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -24,7 +25,7 @@ public class FlightLogController {
 
     @PostMapping("/flight-log")
     public ResponseEntity<FlightLogResponseDto.FlightLogSaveResponseDto> saveFlightLog(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                                                      @RequestBody SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
+                                                                                       @RequestBody SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
         return flightLogService.saveFlightLog(userDetails.getMember(), saveFlightLogRequestDto);
     }
 
@@ -39,8 +40,15 @@ public class FlightLogController {
         return flightLogGetService.getFlightLogList(userDetails.getMember());
     }
 
-    @GetMapping("/flight-log/{flight-log-id}")
-    public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto>  getFlightLog(@PathVariable("flight-log-id") Long flightLogId) {
+    @GetMapping("/flight-log/details/{flight-log-id}")
+    public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto> getFlightLog(@PathVariable("flight-log-id") Long flightLogId) {
         return flightLogGetService.getFlightLog(flightLogId);
+    }
+
+    @GetMapping("/flight-log/data")
+    public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                                  @RequestParam(value = "start-date", required = false) LocalDate startDate,
+                                                                                  @RequestParam(value = "end-date", required = false) LocalDate endDate) {
+        return flightLogGetService.getFlightLogData(userDetails.getMember(), startDate, endDate);
     }
 }

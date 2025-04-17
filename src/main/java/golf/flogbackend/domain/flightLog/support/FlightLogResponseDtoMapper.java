@@ -8,6 +8,7 @@ import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 
 import java.util.List;
+import java.util.Map;
 
 import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
 
@@ -129,6 +130,16 @@ public class FlightLogResponseDtoMapper {
                 .arrival(new FlightLogSummaryResponseDto.ArrivalDto(
                         flightLog.getArrival().getAirportCode(),
                         flightLog.getArrival().getActualTimeLocal()))
+                .build();
+    }
+
+    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(FlightData stats, Map<String, Map<String, Long>> dutyByAircraftType) {
+        return FlightLogResponseDto.FlightLogDataDto.builder()
+                .workDays(stats.getWorkDays())
+                .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(stats.getTotalFlightTime()))
+                .legCount(stats.getLegCount())
+                .dhCount(stats.getDhCount())
+                .dutyByAircraftType(dutyByAircraftType)
                 .build();
     }
 }

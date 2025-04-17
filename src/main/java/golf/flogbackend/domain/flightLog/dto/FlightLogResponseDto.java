@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 
@@ -21,6 +22,16 @@ public class FlightLogResponseDto {
     public record AircraftDto(String number, String type) {}
     public record FlightInfoDto(String flightId, String airline) {}
     public record CrewDto(String crewName) {}
+
+    @Getter
+    @Builder
+    public static class FlightLogDataDto {
+        private Long workDays;
+        private Long legCount;
+        private Long dhCount;
+        private FlightTimeDto totalFlightTime;
+        Map<String, Map<String, Long>> dutyByAircraftType;
+    }
 
     @Getter
     @Builder
