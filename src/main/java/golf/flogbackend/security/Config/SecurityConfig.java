@@ -28,7 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
-public class SecurityConfig{
+public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
@@ -49,7 +49,7 @@ public class SecurityConfig{
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(
-                                "/api/signup", "/api/login"
+                                excludePath
                         )
                         .permitAll()
                 )
@@ -77,4 +77,10 @@ public class SecurityConfig{
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
+    private final String[] excludePath = {
+            "/api/signup",
+            "/api/login",
+            "/api/check-mail"
+    };
 }
