@@ -1,0 +1,70 @@
+name: CD
+
+#해당 브랜치에 push(merge) 했을 때
+on:
+  push:
+    branches:
+      - main
+
+#테스트 결과 작성을 위해 쓰기권한 추가
+permissions: write-all
+#jdk 세팅
+#gradle 캐싱
+#test를 제외한 프로젝트 빌드
+#도커 빌드 & 이미지 push
+#docker-compose 파일을 ec2 서버에 배포
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4.7.1
+        with:
+          java-version: 21
+
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      #배포를 위한 prod properties 설정
+      - name: Make application.properties
+        run: |
+          cd ./src/main/resources
+          touch ./application.properties
+          echo "${{ secrets.APPLICATION }}" > ./application.properties
+        shell: bash
+        
+      - name: Grant Execute Permission For Gradlew
+        run: chmod +x gradlew
+
+      - name: Build With Gradle
+        run: ./gradlew build -x test
+
+      - name: Docker build & Push
+        run: |
+          docker login -u ${{ secrets.DOCKER_ID }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t ${{ secrets.DOCKER_REPO }}/flog .
+          docker push ${{ secrets.DOCKER_REPO }}/flog
+
+      - name: Deploy Images with Docker compose
+        uses: appleboy/ssh-action@master
+        env:
+          APP: "flog"
+          COMPOSE: "/home/ubuntu/compose/docker-compose.yml"
+        with:
+          username: ubuntu
+          host: ${{ secrets.EC2_HOST }}
+          key: ${{ secrets.AWSFLOG }}
+          envs: APP, COMPOSE
+          script_stop: true
+          script: |
+            sudo docker-compose -f $COMPOSE down
+            sudo docker pull ${{ secrets.DOCKER_REPO }}/flog
+            sudo docker-compose -f $COMPOSE up -d
