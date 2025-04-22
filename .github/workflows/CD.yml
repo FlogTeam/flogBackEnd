@@ -1,18 +1,10 @@
 name: CD
-
-#해당 브랜치에 push(merge) 했을 때
 on:
   push:
     branches:
       - main
 
-#테스트 결과 작성을 위해 쓰기권한 추가
 permissions: write-all
-#jdk 세팅
-#gradle 캐싱
-#test를 제외한 프로젝트 빌드
-#도커 빌드 & 이미지 push
-#docker-compose 파일을 ec2 서버에 배포
 jobs:
   build:
     runs-on: ubuntu-latest
