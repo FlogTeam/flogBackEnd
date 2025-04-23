@@ -16,11 +16,11 @@ services:
     restart: always
     networks:
       - flog_network
-  flog-2:
-    image: sindonghyun/flog:latest
-    container_name: flog-2
+  redis:
+    image: redis:latest
+    container_name: redis
     ports:
-      - "8082:8080"
+      - "3306:3306"
     restart: always
     networks:
       - flog_network
