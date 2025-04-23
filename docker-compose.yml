@@ -26,5 +26,5 @@ services:
       - flog_network
 
 networks:
-  egusajo_network:
+  flog_network:
     external: true
