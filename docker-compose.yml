@@ -5,7 +5,7 @@ services:
     container_name: flog
     ports:
       - "8080:8080"
-    restart: alway
+    restart: always
     networks:
       - flog_network
   flog-1:
