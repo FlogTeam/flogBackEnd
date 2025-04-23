@@ -16,15 +16,7 @@ services:
     restart: always
     networks:
       - flog_network
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "3306:3306"
-    restart: always
-    networks:
-      - flog_network
-
+  
 networks:
   flog_network:
     external: true
