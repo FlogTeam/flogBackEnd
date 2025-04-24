@@ -3,6 +3,7 @@ package golf.flogbackend.domain.flightLog.service;
 import golf.flogbackend.domain.crew.repository.CrewRepository;
 import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.dto.FlightLogSummaryResponseDto;
+import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import golf.flogbackend.domain.flightLog.support.DutyCountByAircraftType;
 import golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper;
@@ -37,19 +38,29 @@ public class FlightLogGetService {
     }
 
     public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(Member member, LocalDate startDate, LocalDate endDate) {
-        startDate = startDate == null ? LocalDate.MIN : startDate;
-        endDate = endDate == null ? LocalDate.MAX : endDate;
+        startDate = startDate == null ? LocalDate.EPOCH : startDate;
+        endDate = endDate == null ? LocalDate.now() : endDate;
         if (!startDate.isBefore(endDate)) throw new IllegalArgumentException("startDate must be before endDate");
 
+        List<FlightLog> flightLogList = flightLogRepository.findByMemberIdAndFlightDateBetween(member.getEmail(), startDate, endDate);
+
+
         return ResponseEntity.ok(FlightLogResponseDtoMapper.buildFlightLogDataDto(
-                flightLogRepository.getStatsByMember(member.getEmail(), startDate, endDate),
+                flightLogList,
                 flightLogRepository.findDutyStatsGroupedByAircraftType(member.getEmail(), startDate, endDate).stream()
-                        .collect(Collectors.groupingBy(
-                                d -> d.getAircraftType() != null ? d.getAircraftType() : "UNKNOWN",
-                                Collectors.toMap(
-                                        d -> d.getDuty() != null ? d.getDuty() : "등록되지 않은 duty",
-                                        DutyCountByAircraftType::getCount
+                        .collect(Collectors.groupingBy(DutyCountByAircraftType::getAircraftType))
+                        .entrySet().stream()
+                        .map(entry -> FlightLogResponseDto.DutyByAircraftTypeDto.builder()
+                                .aircraftType(entry.getKey())
+                                .dutyTotalCount(entry.getValue().stream().mapToLong(DutyCountByAircraftType::getCount).sum())
+                                .dutyByAircraftType(
+                                        entry.getValue().stream()
+                                                .map(d -> new FlightLogResponseDto.DutyDto(d.getDuty() != null ? d.getDuty() : "UNKNOWN", d.getCount()))
+                                                .toList()
                                 )
-                        ))));
+                                .build()
+                        )
+                        .toList()
+        ));
     }
 }

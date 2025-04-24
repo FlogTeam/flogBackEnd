@@ -6,7 +6,6 @@ import lombok.Getter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 
@@ -22,6 +21,31 @@ public class FlightLogResponseDto {
     public record AircraftDto(String number, String type) {}
     public record FlightInfoDto(String flightId, String airline) {}
     public record CrewDto(String crewName) {}
+    public record DutyDto(String duty, Long count) {}
+
+    @Getter
+    @Builder
+    public static class DutyByAircraftTypeDto {
+        private String aircraftType;
+        private Long dutyTotalCount;
+        private List<DutyDto> dutyByAircraftType;
+    }
+
+    @Getter
+    @Builder
+    public static class VisitedDataDto {
+        private String name;
+        private Long count;
+        private Double percentage;
+    }
+
+    @Getter
+    @Builder
+    public static class MostVisitedAirportDto {
+        private List<VisitedDataDto> mostVisitedDepartureAirports;
+        private List<VisitedDataDto> mostVisitedArrivalAirports;
+        private List<VisitedDataDto> mostVisitedTotalAirports;
+    }
 
     @Getter
     @Builder
@@ -30,7 +54,10 @@ public class FlightLogResponseDto {
         private Long legCount;
         private Long dhCount;
         private FlightTimeDto totalFlightTime;
-        Map<String, Map<String, Long>> dutyByAircraftType;
+        private MostVisitedAirportDto mostVisitedAirport;
+        private List<VisitedDataDto> mostVisitedCities;
+        private List<VisitedDataDto> mostVisitedCountries;
+        private List<DutyByAircraftTypeDto> dutyByAircraftType;
     }
 
     @Getter

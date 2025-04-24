@@ -4,11 +4,20 @@ import golf.flogbackend.domain.airport.entity.Airport;
 import golf.flogbackend.domain.airport.repository.AirportRepository;
 import golf.flogbackend.domain.country.entity.Country;
 import golf.flogbackend.domain.country.repository.CountryRepository;
+import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +29,7 @@ public class FlightLogUtil {
 
     public FlightLog findFlightLogById(Long flightLogId) {
         return flightLogRepository.findById(flightLogId).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 flight log id : "  + flightLogId));
+                () -> new EntityNotFoundException("존재하지 않는 flight log id : " + flightLogId));
     }
 
     public Airport findAirportByCode(String code) {
@@ -49,4 +58,42 @@ public class FlightLogUtil {
                         Math.sin(dLon / 2) * Math.sin(dLon / 2);
         return RADIUS * 2 * Math.asin(Math.sqrt(a));
     }
+
+    public static List<FlightLogResponseDto.VisitedDataDto> createVisitedDataList(List<FlightLog> flightLogList,
+                                                                                  Function<FlightLog, String> classifier) {
+        return flightLogList.stream()
+                .map(classifier)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .map(entry -> FlightLogResponseDto.VisitedDataDto.builder()
+                        .name(entry.getKey())
+                        .count(entry.getValue())
+                        .percentage((entry.getValue() * 100.0) / flightLogList.size())
+                        .build())
+                .toList();
+    }
+
+    public static List<FlightLogResponseDto.VisitedDataDto> concatVisitedDataList(Stream<FlightLogResponseDto.VisitedDataDto> streamOne,
+                                                                                  Stream<FlightLogResponseDto.VisitedDataDto> streamTwo,
+                                                                                  long size) {
+        return Stream.concat(streamOne, streamTwo)
+                .collect(Collectors.groupingBy(
+                        FlightLogResponseDto.VisitedDataDto::getName,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> {
+                                    long count = list.stream().mapToLong(FlightLogResponseDto.VisitedDataDto::getCount).sum();
+                                    return FlightLogResponseDto.VisitedDataDto.builder()
+                                            .name(!list.isEmpty() ? list.getFirst().getName() : "")
+                                            .count(count)
+                                            .percentage((count * 100.0) / (size * 2))
+                                            .build();
+                                })))
+                .values().stream()
+                .sorted(Comparator.comparingLong(FlightLogResponseDto.VisitedDataDto::getCount).reversed())
+                .toList();
+    }
+
 }
