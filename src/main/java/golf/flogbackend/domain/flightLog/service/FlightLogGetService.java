@@ -7,8 +7,8 @@ import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import golf.flogbackend.domain.flightLog.support.DutyCountByAircraftType;
 import golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper;
+import golf.flogbackend.domain.flightLog.support.FlightLogUtil;
 import golf.flogbackend.domain.member.entity.Member;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapp
 public class FlightLogGetService {
     private final FlightLogRepository flightLogRepository;
     private final CrewRepository crewRepository;
+    private final FlightLogUtil flightLogUtil;
 
     public ResponseEntity<List<FlightLogSummaryResponseDto>> getFlightLogList(Member member) {
         return ResponseEntity.ok(flightLogRepository.findByMemberIdOrderByCreateAtDesc(member.getEmail())
@@ -33,7 +34,7 @@ public class FlightLogGetService {
 
     public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto> getFlightLog(Long flightLogId) {
         return ResponseEntity.ok(buildFlightLogAllInfoDto(
-                flightLogRepository.findById(flightLogId).orElseThrow(EntityNotFoundException::new),
+                flightLogUtil.findFlightLogById(flightLogId),
                 crewRepository.findByFlightLogId(flightLogId)));
     }
 
