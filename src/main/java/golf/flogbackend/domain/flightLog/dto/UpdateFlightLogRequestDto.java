@@ -19,8 +19,10 @@ public class UpdateFlightLogRequestDto {
 
 
     //departure info
-    private LocalDate depDateUtc;
-    private LocalDate depDateLocal;
+    private LocalDate depDateActualUtc;
+    private LocalDate depDateActualLocal;
+    private LocalDate depDateScheduledUtc;
+    private LocalDate depDateScheduledLocal;
     private String depAirportCode;
     private LocalTime depScheduledTimeUtc;
     private LocalTime depScheduledTimeLocal;
@@ -28,8 +30,10 @@ public class UpdateFlightLogRequestDto {
     private LocalTime depActualTimeLocal;
 
     //arrival info
-    private LocalDate arrivalDateUtc;
-    private LocalDate arrivalDateLocal;
+    private LocalDate arrivalDateActualUtc;
+    private LocalDate arrivalDateActualLocal;
+    private LocalDate arrivalDateScheduledUtc;
+    private LocalDate arrivalDateScheduledLocal;
     private String arrivalAirportCode;
     private LocalTime arrivalScheduledTimeUtc;
     private LocalTime arrivalScheduledTimeLocal;

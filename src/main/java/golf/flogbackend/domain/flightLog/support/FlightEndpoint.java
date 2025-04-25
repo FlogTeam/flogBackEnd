@@ -5,8 +5,10 @@ import java.time.LocalTime;
 import java.util.TimeZone;
 
 public interface FlightEndpoint {
-    LocalDate getDateUtc();
-    LocalDate getDateLocal();
+    LocalDate getDateActualUtc();
+    LocalDate getDateActualLocal();
+    LocalDate getDateScheduledUtc();
+    LocalDate getDateScheduledLocal();
     LocalTime getScheduledTimeUtc();
     LocalTime getScheduledTimeLocal();
     LocalTime getActualTimeUtc();
