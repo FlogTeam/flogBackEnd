@@ -15,7 +15,12 @@ public enum ErrorCode {
     ARRIVAL_BEFORE_DEPARTURE_ACTUAL_UTC("code : 5"),
     ARRIVAL_BEFORE_DEPARTURE_ACTUAL_LOCAL("code : 6"),
     ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_UTC("code : 7"),
-    ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_LOCAL("code : 8");
+    ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_LOCAL("code : 8"),
+
+    INVALID_DATE_FORMAT("code : 9"),
+    INVALID_TIME_FORMAT("code : 10"),
+
+    INVALID_DATE_ORDER("code : 11");
 
     private final String code;
 

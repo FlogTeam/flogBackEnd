@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.buildFlightLogAllInfoDto;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.*;
+import static golf.flogbackend.exception.ErrorCode.INVALID_DATE_ORDER;
 
 @Service
 @RequiredArgsConstructor
@@ -38,16 +40,16 @@ public class FlightLogGetService {
                 crewRepository.findByFlightLogId(flightLogId)));
     }
 
-    public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(Member member, LocalDate startDate, LocalDate endDate) {
-        startDate = startDate == null ? LocalDate.EPOCH : startDate;
-        endDate = endDate == null ? LocalDate.now() : endDate;
-        if (!startDate.isBefore(endDate)) throw new IllegalArgumentException("startDate must be before endDate");
+    public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(Member member, String startDate, String endDate) {
+        LocalDate parsedStartDate = parseDateOrDefault(startDate, LocalDate.EPOCH);
+        LocalDate parsedEndDate = parseDateOrDefault(endDate, LocalDate.now());
+        if (!parsedStartDate.isBefore(parsedEndDate)) throw new IllegalArgumentException(INVALID_DATE_ORDER.code() + "startDate must be before endDate");
 
-        List<FlightLog> flightLogList = flightLogRepository.findByMemberIdAndFlightDateBetween(member.getEmail(), startDate, endDate);
+        List<FlightLog> flightLogList = flightLogRepository.findByMemberIdAndFlightDateBetween(member.getEmail(), parsedStartDate, parsedEndDate);
 
         return ResponseEntity.ok(FlightLogResponseDtoMapper.buildFlightLogDataDto(
                 flightLogList,
-                flightLogRepository.findDutyStatsGroupedByAircraftType(member.getEmail(), startDate, endDate).stream()
+                flightLogRepository.findDutyStatsGroupedByAircraftType(member.getEmail(), parsedStartDate, parsedEndDate).stream()
                         .collect(Collectors.groupingBy(DutyCountByAircraftType::getAircraftType))
                         .entrySet().stream()
                         .map(entry -> FlightLogResponseDto.DutyByAircraftTypeDto.builder()

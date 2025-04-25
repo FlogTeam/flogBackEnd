@@ -10,7 +10,12 @@ import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.thymeleaf.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -98,4 +103,21 @@ public class FlightLogUtil {
                 .toList();
     }
 
+    public static LocalDate parseDateOrDefault(String dateStr, LocalDate defaultDate) {
+        if (StringUtils.isEmptyOrWhitespace(dateStr)) return defaultDate;
+        try {
+            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(INVALID_DATE_FORMAT.code() + "날짜 포맷이 올바르지 않습니다. yyyy-MM-dd 형식이어야 합니다. 입력값: " + dateStr);
+        }
+    }
+
+    public static LocalTime parseTimeOrDefault(String timeStr, LocalTime defaultTime) {
+        if (StringUtils.isEmptyOrWhitespace(timeStr)) return defaultTime;
+        try {
+            return LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm"));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(INVALID_TIME_FORMAT.code() + "시간 포맷이 올바르지 않습니다. HH:mm 형식이어야 합니다. 입력값: " + timeStr);
+        }
+    }
 }

@@ -47,8 +47,8 @@ public class FlightLogController {
 
     @GetMapping("/flight-log/data")
     public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                                                  @RequestParam(value = "start-date", required = false) LocalDate startDate,
-                                                                                  @RequestParam(value = "end-date", required = false) LocalDate endDate) {
+                                                                                  @RequestParam(value = "start-date", required = false) String startDate,
+                                                                                  @RequestParam(value = "end-date", required = false) String endDate) {
         return flightLogGetService.getFlightLogData(userDetails.getMember(), startDate, endDate);
     }
 }

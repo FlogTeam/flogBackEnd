@@ -36,7 +36,7 @@ import java.util.TimeZone;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogAllInfoDto;
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
-import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.*;
 import static golf.flogbackend.exception.ErrorCode.*;
 
 @Slf4j
@@ -214,32 +214,32 @@ public class FlightLogService {
         String setArrivalAirportCode = updateFlightLogRequestDto.getArrivalAirportCode();
         String getArrivalAirportCode = flightLog.getArrival().getAirportCode();
 
-        LocalDate depDateActualUtc = updateFlightLogRequestDto.getDepDateActualUtc() == null ? departure.getDateActualUtc() : updateFlightLogRequestDto.getDepDateActualUtc();
-        LocalDate depDateActualLocal = updateFlightLogRequestDto.getDepDateActualLocal() == null ? departure.getDateActualLocal() : updateFlightLogRequestDto.getDepDateActualLocal();
+        LocalDate depDateActualUtc = parseDateOrDefault(updateFlightLogRequestDto.getDepDateActualUtc(), departure.getDateActualLocal());
+        LocalDate depDateActualLocal = parseDateOrDefault(updateFlightLogRequestDto.getDepDateActualLocal(), departure.getDateActualLocal());
 
-        LocalDate depDateScheduledUtc = updateFlightLogRequestDto.getDepDateScheduledUtc() == null ? departure.getDateScheduledUtc() : updateFlightLogRequestDto.getDepDateScheduledUtc();
-        LocalDate depDateScheduledLocal = updateFlightLogRequestDto.getDepDateScheduledLocal() == null ? departure.getDateScheduledLocal() : updateFlightLogRequestDto.getDepDateScheduledLocal();
+        LocalDate depDateScheduledUtc = parseDateOrDefault(updateFlightLogRequestDto.getDepDateScheduledUtc(), departure.getDateScheduledUtc());
+        LocalDate depDateScheduledLocal = parseDateOrDefault(updateFlightLogRequestDto.getDepDateScheduledLocal(), departure.getDateScheduledLocal());
 
-        LocalDate arrivalDateActualUtc = updateFlightLogRequestDto.getArrivalDateActualUtc() == null ? arrival.getDateActualUtc() :  updateFlightLogRequestDto.getArrivalDateActualUtc();
-        LocalDate arrivalDateActualLocal = updateFlightLogRequestDto.getArrivalDateActualLocal() == null ? arrival.getDateActualLocal() : updateFlightLogRequestDto.getArrivalDateActualLocal();
+        LocalDate arrivalDateActualUtc = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateActualUtc(), arrival.getDateActualUtc());
+        LocalDate arrivalDateActualLocal = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateActualLocal(), arrival.getDateActualLocal());
 
-        LocalDate arrivalDateScheduledUtc = updateFlightLogRequestDto.getArrivalDateScheduledUtc() == null ? arrival.getDateScheduledUtc() :  updateFlightLogRequestDto.getArrivalDateScheduledUtc();
-        LocalDate arrivalDateScheduledLocal = updateFlightLogRequestDto.getArrivalDateScheduledLocal() == null ? arrival.getDateScheduledLocal() : updateFlightLogRequestDto.getArrivalDateScheduledLocal();
+        LocalDate arrivalDateScheduledUtc = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateScheduledUtc(), arrival.getDateScheduledUtc());
+        LocalDate arrivalDateScheduledLocal = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateScheduledLocal(), arrival.getDateScheduledLocal());
 
         String airline = updateFlightLogRequestDto.getAirline();
         String aircraftNumber = updateFlightLogRequestDto.getAircraftNumber();
         String aircraftType = updateFlightLogRequestDto.getAircraftType();
         String duty = updateFlightLogRequestDto.getDuty();
 
-        LocalTime depScheduledTimeUtc = updateFlightLogRequestDto.getDepScheduledTimeUtc() == null ? departure.getScheduledTimeUtc() : updateFlightLogRequestDto.getDepScheduledTimeUtc();
-        LocalTime depScheduledTimeLocal = updateFlightLogRequestDto.getDepScheduledTimeLocal() == null ? departure.getScheduledTimeLocal() : updateFlightLogRequestDto.getDepScheduledTimeLocal();
-        LocalTime arrivalScheduledTimeUtc = updateFlightLogRequestDto.getArrivalScheduledTimeUtc() == null ? arrival.getScheduledTimeUtc() : updateFlightLogRequestDto.getArrivalScheduledTimeUtc();
-        LocalTime arrivalScheduledTimeLocal = updateFlightLogRequestDto.getArrivalScheduledTimeLocal() == null ? arrival.getScheduledTimeLocal() : updateFlightLogRequestDto.getArrivalScheduledTimeLocal();
+        LocalTime depScheduledTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getDepScheduledTimeUtc(), departure.getScheduledTimeUtc());
+        LocalTime depScheduledTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getDepScheduledTimeLocal(), departure.getScheduledTimeLocal());
+        LocalTime arrivalScheduledTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalScheduledTimeUtc(), arrival.getScheduledTimeUtc());
+        LocalTime arrivalScheduledTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalScheduledTimeLocal(), arrival.getScheduledTimeLocal());
 
-        LocalTime depActualTimeUtc = updateFlightLogRequestDto.getDepActualTimeUtc() == null ? departure.getActualTimeUtc() : updateFlightLogRequestDto.getDepActualTimeUtc();
-        LocalTime depActualTimeLocal = updateFlightLogRequestDto.getDepActualTimeLocal() == null ? departure.getActualTimeLocal() : updateFlightLogRequestDto.getDepActualTimeLocal();
-        LocalTime arrivalActualTimeUtc = updateFlightLogRequestDto.getArrivalActualTimeUtc() == null ? arrival.getActualTimeUtc() : updateFlightLogRequestDto.getArrivalActualTimeUtc();
-        LocalTime arrivalActualTimeLocal = updateFlightLogRequestDto.getArrivalActualTimeLocal() == null ? arrival.getActualTimeLocal() : updateFlightLogRequestDto.getArrivalActualTimeLocal();
+        LocalTime depActualTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getDepActualTimeUtc(), departure.getActualTimeUtc());
+        LocalTime depActualTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getDepActualTimeLocal(), departure.getActualTimeLocal());
+        LocalTime arrivalActualTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalActualTimeUtc(), arrival.getActualTimeUtc());
+        LocalTime arrivalActualTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalActualTimeLocal(), arrival.getActualTimeLocal());
 
         LocalDateTime depActualDateTimeUtc = LocalDateTime.of(depDateActualUtc, depActualTimeUtc);
         LocalDateTime arrivalActualDateTimeUtc = LocalDateTime.of(arrivalDateActualUtc, arrivalActualTimeUtc);
@@ -283,10 +283,10 @@ public class FlightLogService {
                 .build();
 
         departure = departure.toBuilder()
-                .dateActualUtc(depDateActualUtc == null ? departure.getDateActualUtc() : depDateActualUtc)
-                .dateActualLocal(depDateActualLocal == null ? departure.getDateActualLocal() : depDateActualLocal)
-                .dateScheduledUtc(depDateScheduledUtc == null ? departure.getDateScheduledUtc() : depDateScheduledUtc)
-                .dateScheduledLocal(depDateScheduledLocal == null ? departure.getDateScheduledLocal() : depDateScheduledLocal)
+                .dateActualUtc(depDateActualUtc)
+                .dateActualLocal(depDateActualLocal)
+                .dateScheduledUtc(depDateScheduledUtc)
+                .dateScheduledLocal(depDateScheduledLocal)
                 .scheduledTimeUtc(depScheduledTimeUtc)
                 .scheduledTimeLocal(depScheduledTimeLocal)
                 .actualTimeUtc(depActualTimeUtc)
@@ -294,10 +294,10 @@ public class FlightLogService {
                 .build();
 
         arrival = arrival.toBuilder()
-                .dateActualUtc(arrivalDateActualUtc == null ? arrival.getDateActualUtc() : arrivalDateActualUtc)
-                .dateActualLocal(arrivalDateActualLocal == null ? arrival.getDateActualLocal() : arrivalDateActualLocal)
-                .dateScheduledUtc(arrivalDateScheduledUtc == null ? arrival.getDateScheduledUtc() : arrivalDateScheduledUtc)
-                .dateScheduledLocal(arrivalDateScheduledLocal == null ?  arrival.getDateScheduledLocal() : arrivalDateScheduledLocal)
+                .dateActualUtc(arrivalDateActualUtc)
+                .dateActualLocal(arrivalDateActualLocal)
+                .dateScheduledUtc(arrivalDateScheduledUtc)
+                .dateScheduledLocal(arrivalDateScheduledLocal)
                 .scheduledTimeUtc(arrivalScheduledTimeUtc)
                 .scheduledTimeLocal(arrivalScheduledTimeLocal)
                 .actualTimeUtc(arrivalActualTimeUtc)

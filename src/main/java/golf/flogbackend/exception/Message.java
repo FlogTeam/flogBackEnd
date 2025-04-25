@@ -18,6 +18,14 @@ public class Message {
     public static Message buildMessage(Exception e) {
         String message = e.getMessage();
         if (message.startsWith("code : ")) {
+            if (message.charAt(8) -'0' >= 0 && message.charAt(8) -'0' >= 0) {
+                return Message.builder()
+                        .code(Integer.parseInt(message.substring(7, 9)))
+                        .exception(e.getClass().getSimpleName())
+                        .message(message.substring(9))
+                        .timestamp(LocalDateTime.now())
+                        .build();
+            }
             return Message.builder()
                     .code(message.charAt(7) - '0')
                     .exception(e.getClass().getSimpleName())
