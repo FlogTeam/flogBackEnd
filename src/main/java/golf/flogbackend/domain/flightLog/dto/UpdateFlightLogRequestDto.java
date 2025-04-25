@@ -19,24 +19,24 @@ public class UpdateFlightLogRequestDto {
 
 
     //departure info
-    private LocalDate depDateActualUtc;
-    private LocalDate depDateActualLocal;
-    private LocalDate depDateScheduledUtc;
-    private LocalDate depDateScheduledLocal;
+    private String depDateActualUtc;
+    private String depDateActualLocal;
+    private String depDateScheduledUtc;
+    private String depDateScheduledLocal;
     private String depAirportCode;
-    private LocalTime depScheduledTimeUtc;
-    private LocalTime depScheduledTimeLocal;
-    private LocalTime depActualTimeUtc;
-    private LocalTime depActualTimeLocal;
+    private String depScheduledTimeUtc;
+    private String depScheduledTimeLocal;
+    private String depActualTimeUtc;
+    private String depActualTimeLocal;
 
     //arrival info
-    private LocalDate arrivalDateActualUtc;
-    private LocalDate arrivalDateActualLocal;
-    private LocalDate arrivalDateScheduledUtc;
-    private LocalDate arrivalDateScheduledLocal;
+    private String arrivalDateActualUtc;
+    private String arrivalDateActualLocal;
+    private String arrivalDateScheduledUtc;
+    private String arrivalDateScheduledLocal;
     private String arrivalAirportCode;
-    private LocalTime arrivalScheduledTimeUtc;
-    private LocalTime arrivalScheduledTimeLocal;
-    private LocalTime arrivalActualTimeUtc;
-    private LocalTime arrivalActualTimeLocal;
+    private String arrivalScheduledTimeUtc;
+    private String arrivalScheduledTimeLocal;
+    private String arrivalActualTimeUtc;
+    private String arrivalActualTimeLocal;
 }
