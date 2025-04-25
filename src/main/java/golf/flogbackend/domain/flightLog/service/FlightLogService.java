@@ -52,7 +52,7 @@ public class FlightLogService {
     @Transactional
     public ResponseEntity<FlightLogSaveResponseDto> saveFlightLog(Member member, SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
         String flightId = saveFlightLogRequestDto.getFlightId();
-        LocalDate flightDate = saveFlightLogRequestDto.getFlightDate();
+        LocalDate flightDate = parseDateOrDefault(saveFlightLogRequestDto.getFlightDate(), null);
 
         Optional<FlightLog> flightLogCheck = flightLogRepository.findByMemberIdAndFlightIdAndFlightDate(member.getEmail(), flightId, flightDate);
         if (flightLogCheck.isPresent())
