@@ -29,6 +29,7 @@ import java.net.URI;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
 
@@ -36,6 +37,7 @@ import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightL
 import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
 import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
+import static golf.flogbackend.exception.ErrorCode.*;
 
 @Slf4j
 @Service
@@ -131,8 +133,10 @@ public class FlightLogService {
                 .airline((String) ((JSONObject) jsonObj.get("airline")).get("name"))
                 .memberId(member.getEmail())
                 .departure(Departure.builder()
-                        .dateUtc(depScheduleUtc.toLocalDate())
-                        .dateLocal(depScheduleLocal.toLocalDate())
+                        .dateScheduledUtc(depScheduleUtc.toLocalDate())
+                        .dateScheduledLocal(depScheduleLocal.toLocalDate())
+                        .dateActualUtc(depScheduleUtc.toLocalDate())
+                        .dateActualLocal(depScheduleLocal.toLocalDate())
                         .scheduledTimeUtc(depScheduleTimeUtc)
                         .scheduledTimeLocal(depScheduleTimeLocal)
                         .actualTimeUtc(depScheduleTimeUtc)
@@ -151,8 +155,10 @@ public class FlightLogService {
                         .cityName(depAirport.getCityName())
                         .build())
                 .arrival(Arrival.builder()
-                        .dateUtc(arrivalScheduleUtc.toLocalDate())
-                        .dateLocal(arrivalScheduleLocal.toLocalDate())
+                        .dateScheduledUtc(arrivalScheduleUtc.toLocalDate())
+                        .dateScheduledLocal(arrivalScheduleLocal.toLocalDate())
+                        .dateActualUtc(arrivalScheduleUtc.toLocalDate())
+                        .dateActualLocal(arrivalScheduleLocal.toLocalDate())
                         .scheduledTimeUtc(arrivalScheduleTimeUtc)
                         .scheduledTimeLocal(arrivalScheduleTimeLocal)
                         .actualTimeUtc(arrivalScheduleTimeUtc)
@@ -208,10 +214,18 @@ public class FlightLogService {
         String setArrivalAirportCode = updateFlightLogRequestDto.getArrivalAirportCode();
         String getArrivalAirportCode = flightLog.getArrival().getAirportCode();
 
-        LocalDate depDateUtc = updateFlightLogRequestDto.getDepDateUtc();
-        LocalDate depDateLocal = updateFlightLogRequestDto.getDepDateLocal();
-        LocalDate arrivalDateUtc = updateFlightLogRequestDto.getArrivalDateUtc();
-        LocalDate arrivalDateLocal = updateFlightLogRequestDto.getArrivalDateLocal();
+        LocalDate depDateActualUtc = updateFlightLogRequestDto.getDepDateActualUtc();
+        LocalDate depDateActualLocal = updateFlightLogRequestDto.getDepDateActualLocal();
+
+        LocalDate depDateScheduledUtc = updateFlightLogRequestDto.getDepDateScheduledUtc();
+        LocalDate depDateScheduledLocal = updateFlightLogRequestDto.getDepDateScheduledLocal();
+
+        LocalDate arrivalDateActualUtc = updateFlightLogRequestDto.getArrivalDateActualUtc();
+        LocalDate arrivalDateActualLocal = updateFlightLogRequestDto.getArrivalDateActualLocal();
+
+        LocalDate arrivalDateScheduledUtc = updateFlightLogRequestDto.getArrivalDateScheduledLocal();
+        LocalDate arrivalDateScheduledLocal = updateFlightLogRequestDto.getArrivalDateScheduledLocal();
+
         String airline = updateFlightLogRequestDto.getAirline();
         String aircraftNumber = updateFlightLogRequestDto.getAircraftNumber();
         String aircraftType = updateFlightLogRequestDto.getAircraftType();
@@ -234,8 +248,10 @@ public class FlightLogService {
                 .build();
 
         departure = departure.toBuilder()
-                .dateUtc(depDateUtc == null ? departure.getDateUtc() : depDateUtc)
-                .dateLocal(depDateLocal == null ? departure.getDateLocal() : depDateLocal)
+                .dateActualUtc(depDateActualUtc == null ? departure.getDateActualUtc() : depDateActualUtc)
+                .dateActualLocal(depDateActualLocal == null ? departure.getDateActualLocal() : depDateActualLocal)
+                .dateScheduledUtc(depDateScheduledUtc == null ? departure.getDateScheduledUtc() : depDateScheduledUtc)
+                .dateScheduledLocal(depDateScheduledLocal == null ? departure.getDateScheduledLocal() : depDateScheduledLocal)
                 .scheduledTimeUtc(depScheduledTimeUtc)
                 .scheduledTimeLocal(depScheduledTimeLocal)
                 .actualTimeUtc(depActualTimeUtc)
@@ -243,41 +259,24 @@ public class FlightLogService {
                 .build();
 
         arrival = arrival.toBuilder()
-                .dateUtc(arrivalDateUtc == null ? arrival.getDateUtc() : arrivalDateUtc)
-                .dateLocal(arrivalDateLocal == null ? arrival.getDateLocal() : arrivalDateLocal)
+                .dateActualUtc(arrivalDateActualUtc == null ? arrival.getDateActualUtc() : arrivalDateActualUtc)
+                .dateActualLocal(arrivalDateActualLocal == null ? arrival.getDateActualLocal() : arrivalDateActualLocal)
+                .dateScheduledUtc(arrivalDateScheduledUtc == null ? arrival.getDateScheduledUtc() : arrivalDateScheduledUtc)
+                .dateScheduledLocal(arrivalDateScheduledLocal == null ?  arrival.getDateScheduledLocal() : arrivalDateScheduledLocal)
                 .scheduledTimeUtc(arrivalScheduledTimeUtc)
                 .scheduledTimeLocal(arrivalScheduledTimeLocal)
                 .actualTimeUtc(arrivalActualTimeUtc)
                 .actualTimeLocal(arrivalActualTimeLocal)
                 .build();
 
-        if (setDepAirportCode != null && setArrivalAirportCode != null && !(setDepAirportCode.equals(getDepAirportCode) && setArrivalAirportCode.equals(getArrivalAirportCode))) {
-            if (!StringUtils.isEmptyOrWhitespace(setDepAirportCode)) {
-                if (setDepAirportCode.equals(setArrivalAirportCode))
-                    throw new IllegalArgumentException("출발지 공항 코드와 도착지 공항 코드가 같음. 출발지 : " + setDepAirportCode + ", 도착지 : " + setArrivalAirportCode);
-                if (!setDepAirportCode.equals(getDepAirportCode)) {
-                    Airport airport = flightLogUtil.findAirportByCode(setDepAirportCode);
-                    Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
-                    departure = departure.toBuilder()
-                            .airportCode(airport.getCode())
-                            .airportName(airport.getAirportName())
-                            .airportNameKorean(airport.getAirportNameKorean())
-                            .cityCode(airport.getCityCode())
-                            .cityName(airport.getCityName())
-                            .countryCode(airport.getCountryCode())
-                            .countryName(country.getCountryName())
-                            .countryNameKorean(country.getCountryNameKorean())
-                            .region(country.getRegion())
-                            .airportLocationLon(airport.getLon())
-                            .airportLocationLat(airport.getLat())
-                            .airportTimezone(airport.getTimeZone())
-                            .build();
-                }
-            }
-            if (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode)) {
-                Airport airport = flightLogUtil.findAirportByCode(setArrivalAirportCode);
+
+        if (!StringUtils.isEmptyOrWhitespace(setDepAirportCode)) {
+            if (setDepAirportCode.equals(setArrivalAirportCode))
+                throw new IllegalArgumentException("출발지 공항 코드와 도착지 공항 코드가 같음. 출발지 : " + setDepAirportCode + ", 도착지 : " + setArrivalAirportCode);
+            if (!setDepAirportCode.equals(getDepAirportCode)) {
+                Airport airport = flightLogUtil.findAirportByCode(setDepAirportCode);
                 Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
-                arrival = arrival.toBuilder()
+                departure = departure.toBuilder()
                         .airportCode(airport.getCode())
                         .airportName(airport.getAirportName())
                         .airportNameKorean(airport.getAirportNameKorean())
@@ -293,9 +292,27 @@ public class FlightLogService {
                         .build();
             }
         }
+        if (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode)) {
+            Airport airport = flightLogUtil.findAirportByCode(setArrivalAirportCode);
+            Country country = flightLogUtil.findCountryByCode(airport.getCountryCode());
+            arrival = arrival.toBuilder()
+                    .airportCode(airport.getCode())
+                    .airportName(airport.getAirportName())
+                    .airportNameKorean(airport.getAirportNameKorean())
+                    .cityCode(airport.getCityCode())
+                    .cityName(airport.getCityName())
+                    .countryCode(airport.getCountryCode())
+                    .countryName(country.getCountryName())
+                    .countryNameKorean(country.getCountryNameKorean())
+                    .region(country.getRegion())
+                    .airportLocationLon(airport.getLon())
+                    .airportLocationLat(airport.getLat())
+                    .airportTimezone(airport.getTimeZone())
+                    .build();
+        }
 
-        if ((!StringUtils.isEmptyOrWhitespace(setDepAirportCode) && !setDepAirportCode.equals(getDepAirportCode)) ||
-                (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode))) {
+        if ((!StringUtils.isEmptyOrWhitespace(setDepAirportCode) || !StringUtils.isEmptyOrWhitespace(setArrivalAirportCode)) &&
+                !(Objects.equals(getDepAirportCode, setDepAirportCode) && Objects.equals(getArrivalAirportCode, setArrivalAirportCode))) {
             Double distanceKilometers = distanceInKilometerByHaversine(
                     departure.getAirportLocationLat(),
                     arrival.getAirportLocationLat(),
@@ -308,6 +325,7 @@ public class FlightLogService {
                             .miles(distanceKilometers * 0.621371)
                             .build())
                     .build();
+
         }
 
         flightLog = flightLog.toBuilder()
@@ -319,34 +337,38 @@ public class FlightLogService {
                 .departure(departure)
                 .aircraft(aircraft)
                 .build();
-        LocalDateTime depActualDateTimeUtc = LocalDateTime.of(flightLog.getDeparture().getDateUtc(), depActualTimeUtc);
-        LocalDateTime arrivalActualDateTimeUtc = LocalDateTime.of(flightLog.getArrival().getDateUtc(), arrivalActualTimeUtc);
-        LocalDateTime depActualDateTimeLocal = LocalDateTime.of(flightLog.getDeparture().getDateLocal(), depActualTimeLocal);
-        LocalDateTime arrivalActualDateTimeLocal = LocalDateTime.of(flightLog.getArrival().getDateLocal(), arrivalActualTimeLocal);
-        LocalDateTime depScheduleDateTimeUtc = LocalDateTime.of(flightLog.getDeparture().getDateUtc(), depScheduledTimeUtc);
-        LocalDateTime arrivalScheduleDateTimeUtc = LocalDateTime.of(flightLog.getArrival().getDateUtc(), arrivalScheduledTimeUtc);
-        LocalDateTime depScheduleDateTimeLocal = LocalDateTime.of(flightLog.getDeparture().getDateLocal(), depScheduledTimeLocal);
-        LocalDateTime arrivalScheduleDateTimeLocal = LocalDateTime.of(flightLog.getArrival().getDateLocal(), arrivalScheduledTimeLocal);
+        LocalDateTime depActualDateTimeUtc = LocalDateTime.of(flightLog.getDeparture().getDateActualUtc(), depActualTimeUtc);
+        LocalDateTime arrivalActualDateTimeUtc = LocalDateTime.of(flightLog.getArrival().getDateActualUtc(), arrivalActualTimeUtc);
 
-        if (arrivalActualDateTimeUtc.isBefore(depActualDateTimeUtc)) throw new IllegalArgumentException(String.format(
-                "도착 시각(Actual/UTC)은 출발 시각(Actual/UTC)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
-                depActualDateTimeUtc, arrivalActualDateTimeUtc
-        ));
+        LocalDateTime depActualDateTimeLocal = LocalDateTime.of(flightLog.getDeparture().getDateActualUtc(), depActualTimeLocal);
+        LocalDateTime arrivalActualDateTimeLocal = LocalDateTime.of(flightLog.getArrival().getDateActualLocal(), arrivalActualTimeLocal);
+
+        LocalDateTime depScheduleDateTimeUtc = LocalDateTime.of(flightLog.getDeparture().getDateScheduledUtc(), depScheduledTimeUtc);
+        LocalDateTime arrivalScheduleDateTimeUtc = LocalDateTime.of(flightLog.getArrival().getDateScheduledLocal(), arrivalScheduledTimeUtc);
+
+        LocalDateTime depScheduleDateTimeLocal = LocalDateTime.of(flightLog.getDeparture().getDateScheduledUtc(), depScheduledTimeLocal);
+        LocalDateTime arrivalScheduleDateTimeLocal = LocalDateTime.of(flightLog.getArrival().getDateScheduledLocal(), arrivalScheduledTimeLocal);
+
+        if (arrivalActualDateTimeUtc.isBefore(depActualDateTimeUtc))
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_ACTUAL_UTC.getCode() + String.format(
+                    "도착 시각(Actual/UTC)은 출발 시각(Actual/UTC)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
+                    depActualDateTimeUtc, arrivalActualDateTimeUtc
+            ));
 
         if (arrivalActualDateTimeLocal.isBefore(depActualDateTimeLocal))
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_ACTUAL_LOCAL.getCode() + String.format(
                     "도착 시각(Actual/Local)은 출발 시각(Actual/Local)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
                     depActualDateTimeLocal, arrivalActualDateTimeLocal
             ));
 
         if (arrivalScheduleDateTimeUtc.isBefore(depScheduleDateTimeUtc))
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_UTC.getCode() + String.format(
                     "도착 시각(Scheduled/UTC)은 출발 시각(Scheduled/UTC)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
                     depScheduleDateTimeUtc, arrivalScheduleDateTimeUtc
             ));
 
         if (arrivalScheduleDateTimeLocal.isBefore(depScheduleDateTimeLocal))
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_LOCAL.getCode() + String.format(
                     "도착 시각(Scheduled/Local)은 출발 시각(Scheduled/Local)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
                     depScheduleDateTimeLocal, arrivalScheduleDateTimeLocal
             ));
@@ -367,3 +389,4 @@ public class FlightLogService {
                         .toList()) : List.of()));
     }
 }
+

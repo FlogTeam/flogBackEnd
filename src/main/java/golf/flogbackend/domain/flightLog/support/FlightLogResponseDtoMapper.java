@@ -23,9 +23,14 @@ public class FlightLogResponseDtoMapper {
         return new FlightLogResponseDto.ActualTimeDto(flightEndpoint.getActualTimeUtc(), flightEndpoint.getActualTimeLocal());
     }
 
-    public static FlightLogResponseDto.DateInfoDto buildDateInfoDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.ScheduledDateInfoDto buildScheduledDateInfoDto(EndpointEnum endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
-        return new FlightLogResponseDto.DateInfoDto(flightEndpoint.getDateUtc(), flightEndpoint.getDateLocal());
+        return new FlightLogResponseDto.ScheduledDateInfoDto(flightEndpoint.getDateScheduledUtc(), flightEndpoint.getDateScheduledLocal());
+    }
+
+    public static FlightLogResponseDto.ActualDateInfoDto buildActualDateInfoDto(EndpointEnum endpoint, FlightLog flightLog) {
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.ActualDateInfoDto(flightEndpoint.getDateActualUtc(), flightEndpoint.getDateActualLocal());
     }
 
     public static FlightLogResponseDto.AirportDto buildAirportDto(EndpointEnum endpoint, FlightLog flightLog) {
@@ -77,7 +82,8 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.DepartureDto buildDepartureDto(FlightLog flightLog) {
         return FlightLogResponseDto.DepartureDto.builder()
-                .dateInfo(buildDateInfoDto(EndpointEnum.DEPARTURE, flightLog))
+                .scheduledDateInfo(buildScheduledDateInfoDto(EndpointEnum.DEPARTURE, flightLog))
+                .actualDateInfo(buildActualDateInfoDto(EndpointEnum.DEPARTURE, flightLog))
                 .airport(buildAirportDto(EndpointEnum.DEPARTURE, flightLog))
                 .country(buildCountryDto(EndpointEnum.DEPARTURE, flightLog))
                 .city(buildCityDto(EndpointEnum.DEPARTURE, flightLog))
@@ -90,7 +96,8 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.ArrivalDto buildArrivalDto(FlightLog flightLog) {
         return FlightLogResponseDto.ArrivalDto.builder()
-                .dateInfo(buildDateInfoDto(EndpointEnum.ARRIVAL, flightLog))
+                .scheduledDateInfo(buildScheduledDateInfoDto(EndpointEnum.ARRIVAL, flightLog))
+                .actualDateInfo(buildActualDateInfoDto(EndpointEnum.ARRIVAL, flightLog))
                 .airport(buildAirportDto(EndpointEnum.ARRIVAL, flightLog))
                 .country(buildCountryDto(EndpointEnum.ARRIVAL, flightLog))
                 .city(buildCityDto(EndpointEnum.ARRIVAL, flightLog))

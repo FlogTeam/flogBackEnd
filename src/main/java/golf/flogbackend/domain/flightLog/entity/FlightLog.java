@@ -35,8 +35,10 @@ public class FlightLog extends Timestamped {
     private Aircraft aircraft;
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "dateUtc", column = @Column(name = "departure_date_utc")),
-            @AttributeOverride(name = "dateLocal", column = @Column(name = "departure_date_local")),
+            @AttributeOverride(name = "dateActualUtc", column = @Column(name = "departure_date_actual_utc")),
+            @AttributeOverride(name = "dateActualLocal", column = @Column(name = "departure_date_actual_local")),
+            @AttributeOverride(name = "dateScheduledUtc", column = @Column(name = "departure_date_scheduled_utc")),
+            @AttributeOverride(name = "dateScheduledLocal", column = @Column(name = "departure_date_scheduled_local")),
             @AttributeOverride(name = "airportCode", column = @Column(name = "departure_airport_code")),
             @AttributeOverride(name = "airportName", column = @Column(name = "departure_airport_name")),
             @AttributeOverride(name = "airportNameKorean", column = @Column(name = "departure_airport_name_korean")),
@@ -58,8 +60,10 @@ public class FlightLog extends Timestamped {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "dateUtc", column = @Column(name = "arrival_date_utc")),
-            @AttributeOverride(name = "dateLocal", column = @Column(name = "arrival_date_local")),
+            @AttributeOverride(name = "dateActualUtc", column = @Column(name = "arrival_date_actual_utc")),
+            @AttributeOverride(name = "dateActualLocal", column = @Column(name = "arrival_date_actual_local")),
+            @AttributeOverride(name = "dateScheduledUtc", column = @Column(name = "arrival_date_scheduled_utc")),
+            @AttributeOverride(name = "dateScheduledLocal", column = @Column(name = "arrival_date_scheduled_local")),
             @AttributeOverride(name = "airportCode", column = @Column(name = "arrival_airport_code")),
             @AttributeOverride(name = "airportName", column = @Column(name = "arrival_airport_name")),
             @AttributeOverride(name = "airportNameKorean", column = @Column(name = "arrival_airport_name_korean")),

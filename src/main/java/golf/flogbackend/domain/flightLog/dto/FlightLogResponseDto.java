@@ -13,7 +13,8 @@ import java.util.TimeZone;
 public class FlightLogResponseDto {
     public record ScheduledTimeDto(LocalTime utc, LocalTime local) {}
     public record ActualTimeDto(LocalTime utc, LocalTime local) {}
-    public record DateInfoDto(LocalDate utc, LocalDate local) {}
+    public record ScheduledDateInfoDto(LocalDate utc, LocalDate local) {}
+    public record ActualDateInfoDto(LocalDate utc, LocalDate local) {}
     public record LocationDto(Double latitude, Double longitude) {}
     public record CityDto(String code, String name) {}
     public record AirportDto(String code, String name, String nameKorean) {}
@@ -63,7 +64,8 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class DepartureDto {
-        private DateInfoDto dateInfo;
+        private ScheduledDateInfoDto scheduledDateInfo;
+        private ActualDateInfoDto actualDateInfo;
         private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;
@@ -76,7 +78,8 @@ public class FlightLogResponseDto {
     @Getter
     @Builder
     public static class ArrivalDto {
-        private DateInfoDto dateInfo;
+        private ScheduledDateInfoDto scheduledDateInfo;
+        private ActualDateInfoDto actualDateInfo;
         private AirportDto airport;
         private LocationDto location;
         private TimeZone timeZone;

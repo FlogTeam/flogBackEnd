@@ -44,7 +44,6 @@ public class FlightLogGetService {
 
         List<FlightLog> flightLogList = flightLogRepository.findByMemberIdAndFlightDateBetween(member.getEmail(), startDate, endDate);
 
-
         return ResponseEntity.ok(FlightLogResponseDtoMapper.buildFlightLogDataDto(
                 flightLogList,
                 flightLogRepository.findDutyStatsGroupedByAircraftType(member.getEmail(), startDate, endDate).stream()
