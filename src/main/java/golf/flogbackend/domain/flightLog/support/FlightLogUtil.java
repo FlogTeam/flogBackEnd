@@ -19,6 +19,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static golf.flogbackend.exception.ErrorCode.*;
+
 @Component
 @RequiredArgsConstructor
 public class FlightLogUtil {
@@ -29,17 +31,17 @@ public class FlightLogUtil {
 
     public FlightLog findFlightLogById(Long flightLogId) {
         return flightLogRepository.findById(flightLogId).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 flight log id : " + flightLogId));
+                () -> new EntityNotFoundException(NOT_FOUND_FLIGHT_LOG.code() + "존재하지 않는 flight log id : " + flightLogId));
     }
 
     public Airport findAirportByCode(String code) {
         return airportRepository.findById(code).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 공항 코드 : " + code));
+                () -> new EntityNotFoundException(NOT_FOUND_AIRPORT.getCode() + "존재하지 않는 공항 코드 : " + code));
     }
 
     public Country findCountryByCode(String code) {
         return countryRepository.findById(code).orElseThrow(
-                () -> new EntityNotFoundException("존재하지 않는 나라 코드 : " + code));
+            () -> new EntityNotFoundException(NOT_FOUND_COUNTRY.getCode() + "존재하지 않는 나라 코드 : " + code));
     }
 
     public static FlightEndpoint getEndpoint(FlightLog flightLog, EndpointEnum endpoint) {
