@@ -37,6 +37,8 @@ public class Departure implements FlightEndpoint {
     @Column
     private String cityName;
     @Column
+    private String cityNameKorean;
+    @Column
     private String countryCode;
     @Column
     private String countryName;

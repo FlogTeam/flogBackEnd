@@ -36,16 +36,18 @@ public class FlightLogResponseDto {
     @Builder
     public static class VisitedDataDto {
         private String name;
+        private String code;
+        private String nameKorean;
         private Long count;
         private Double percentage;
     }
 
     @Getter
     @Builder
-    public static class MostVisitedAirportDto {
-        private List<VisitedDataDto> mostVisitedDepartureAirports;
-        private List<VisitedDataDto> mostVisitedArrivalAirports;
-        private List<VisitedDataDto> mostVisitedTotalAirports;
+    public static class MostVisitedDataDto {
+        private List<VisitedDataDto> mostVisitedDeparture;
+        private List<VisitedDataDto> mostVisitedArrival;
+        private List<VisitedDataDto> mostVisitedTotal;
     }
 
     @Getter
@@ -55,9 +57,9 @@ public class FlightLogResponseDto {
         private Long legCount;
         private Long dhCount;
         private FlightTimeDto totalFlightTime;
-        private MostVisitedAirportDto mostVisitedAirport;
-        private List<VisitedDataDto> mostVisitedCities;
-        private List<VisitedDataDto> mostVisitedCountries;
+        private MostVisitedDataDto mostVisitedAirport;
+        private MostVisitedDataDto mostVisitedCities;
+        private MostVisitedDataDto mostVisitedCountries;
         private List<DutyByAircraftTypeDto> dutyByAircraftType;
     }
 

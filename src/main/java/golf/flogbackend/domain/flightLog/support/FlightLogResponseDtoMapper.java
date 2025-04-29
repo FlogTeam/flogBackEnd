@@ -139,35 +139,29 @@ public class FlightLogResponseDtoMapper {
                 .build();
     }
 
-    public static FlightLogResponseDto.MostVisitedAirportDto buildMostVisitedAirportDto(List<FlightLog> flightLogList) {
-        List<FlightLogResponseDto.VisitedDataDto> mostVisitedDeparture = FlightLogUtil.createVisitedDataList(flightLogList, log -> log.getDeparture().getAirportName());
-        List<FlightLogResponseDto.VisitedDataDto> mostVisitedArrival = FlightLogUtil.createVisitedDataList(flightLogList, log -> log.getArrival().getAirportName());
-        return FlightLogResponseDto.MostVisitedAirportDto.builder()
-                .mostVisitedDepartureAirports(mostVisitedDeparture)
-                .mostVisitedArrivalAirports(mostVisitedArrival)
-                .mostVisitedTotalAirports(FlightLogUtil.concatVisitedDataList(
-                        mostVisitedDeparture.stream(),
-                        mostVisitedArrival.stream(),
+    public static FlightLogResponseDto.MostVisitedDataDto buildMostVisitedDataDto(List<FlightLog> flightLogList,
+                                                                                  LocationType locationType) {
+        List<FlightLogResponseDto.VisitedDataDto> mostVisitedDeparture = FlightLogUtil.createVisitedDataList(flightLogList, f -> locationType.getClassifier().apply(f));
+        List<FlightLogResponseDto.VisitedDataDto> mostVisitedArrival = FlightLogUtil.createVisitedDataList(flightLogList, f -> locationType.getClassifier().apply(f));
+        return FlightLogResponseDto.MostVisitedDataDto.builder()
+                .mostVisitedDeparture(mostVisitedDeparture)
+                .mostVisitedArrival(mostVisitedArrival)
+                .mostVisitedTotal(FlightLogUtil.concatVisitedDataList(
+                        mostVisitedDeparture.stream(), mostVisitedArrival.stream(),
                         flightLogList.size()))
                 .build();
     }
 
-    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(List<FlightLog> flightLogList, List<FlightLogResponseDto.DutyByAircraftTypeDto> dutyByAircraftType) {
-
+    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(List<FlightLog> flightLogList,
+                                                                              List<FlightLogResponseDto.DutyByAircraftTypeDto> dutyByAircraftType) {
         return FlightLogResponseDto.FlightLogDataDto.builder()
                 .workDays(flightLogList.stream().map(FlightLog::getFlightDate).distinct().count())
                 .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(flightLogList.stream().map(FlightLog::getFlightTime).reduce(Long::sum).orElse(0L)))
                 .legCount((long) flightLogList.size())
                 .dhCount(flightLogList.stream().map(FlightLog::getDuty).filter(d -> d != null && (d.equals("DH") || d.equals("dh"))).count())
-                .mostVisitedAirport(buildMostVisitedAirportDto(flightLogList))
-                .mostVisitedCities(FlightLogUtil.concatVisitedDataList(
-                        FlightLogUtil.createVisitedDataList(flightLogList, (f -> f.getDeparture().getCityName())).stream(),
-                        FlightLogUtil.createVisitedDataList(flightLogList, (f -> f.getArrival().getCityName())).stream(),
-                        flightLogList.size()))
-                .mostVisitedCountries(FlightLogUtil.concatVisitedDataList(
-                        FlightLogUtil.createVisitedDataList(flightLogList, (f -> f.getDeparture().getCountryName())).stream(),
-                        FlightLogUtil.createVisitedDataList(flightLogList, (f -> f.getArrival().getCountryName())).stream(),
-                        flightLogList.size()))
+                .mostVisitedAirport(buildMostVisitedDataDto(flightLogList, LocationType.AIRPORT))
+                .mostVisitedCities(buildMostVisitedDataDto(flightLogList, LocationType.CITY))
+                .mostVisitedCountries(buildMostVisitedDataDto(flightLogList, LocationType.COUNTRY))
                 .dutyByAircraftType(dutyByAircraftType)
                 .build();
     }

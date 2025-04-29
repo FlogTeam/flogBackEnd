@@ -9,6 +9,7 @@ import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.util.StringUtils;
 
@@ -46,7 +47,7 @@ public class FlightLogUtil {
 
     public Country findCountryByCode(String code) {
         return countryRepository.findById(code).orElseThrow(
-            () -> new EntityNotFoundException(NOT_FOUND_COUNTRY.getCode() + "존재하지 않는 나라 코드 : " + code));
+                () -> new EntityNotFoundException(NOT_FOUND_COUNTRY.getCode() + "존재하지 않는 나라 코드 : " + code));
     }
 
     public static FlightEndpoint getEndpoint(FlightLog flightLog, EndpointEnum endpoint) {
@@ -67,17 +68,20 @@ public class FlightLogUtil {
     }
 
     public static List<FlightLogResponseDto.VisitedDataDto> createVisitedDataList(List<FlightLog> flightLogList,
-                                                                                  Function<FlightLog, String> classifier) {
+                                                                                  Function<FlightLog, Triple<String, String, String>> classifier) {
         return flightLogList.stream()
                 .map(classifier)
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<Triple<String, String, String>, Long>comparingByValue().reversed())
                 .map(entry -> FlightLogResponseDto.VisitedDataDto.builder()
-                        .name(entry.getKey())
+                        .name(entry.getKey().getLeft())
+                        .code(entry.getKey().getMiddle())
+                        .nameKorean(entry.getKey().getRight())
                         .count(entry.getValue())
-                        .percentage((entry.getValue() * 100.0) / flightLogList.size())
+                        .percentage(round((entry.getValue() * 100.0) / flightLogList.size()))
                         .build())
                 .toList();
     }
@@ -94,8 +98,10 @@ public class FlightLogUtil {
                                     long count = list.stream().mapToLong(FlightLogResponseDto.VisitedDataDto::getCount).sum();
                                     return FlightLogResponseDto.VisitedDataDto.builder()
                                             .name(!list.isEmpty() ? list.getFirst().getName() : "")
+                                            .code(!list.isEmpty() ? list.getFirst().getCode() : "")
+                                            .nameKorean(!list.isEmpty() ? list.getFirst().getNameKorean() : "")
                                             .count(count)
-                                            .percentage((count * 100.0) / (size * 2))
+                                            .percentage(round((count * 100.0) / (size * 2)))
                                             .build();
                                 })))
                 .values().stream()
@@ -119,5 +125,9 @@ public class FlightLogUtil {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(INVALID_TIME_FORMAT.code() + "시간 포맷이 올바르지 않습니다. HH:mm 형식이어야 합니다. 입력값: " + timeStr);
         }
+    }
+
+    public static Double round(Double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }
