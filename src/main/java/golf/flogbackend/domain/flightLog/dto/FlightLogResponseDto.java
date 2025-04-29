@@ -44,6 +44,13 @@ public class FlightLogResponseDto {
 
     @Getter
     @Builder
+    public static class CrewMateDto {
+        private String name;
+        private Long count;
+    }
+
+    @Getter
+    @Builder
     public static class MostVisitedDataDto {
         private List<VisitedDataDto> mostVisitedDeparture;
         private List<VisitedDataDto> mostVisitedArrival;
@@ -61,6 +68,7 @@ public class FlightLogResponseDto {
         private MostVisitedDataDto mostVisitedCities;
         private MostVisitedDataDto mostVisitedCountries;
         private List<DutyByAircraftTypeDto> dutyByAircraftType;
+        private List<CrewMateDto> crewMate;
     }
 
     @Getter

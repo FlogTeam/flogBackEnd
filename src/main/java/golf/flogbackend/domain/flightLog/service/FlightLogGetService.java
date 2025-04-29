@@ -1,5 +1,6 @@
 package golf.flogbackend.domain.flightLog.service;
 
+import golf.flogbackend.domain.crew.entity.Crew;
 import golf.flogbackend.domain.crew.repository.CrewRepository;
 import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.dto.FlightLogSummaryResponseDto;
@@ -14,11 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.buildFlightLogAllInfoDto;
-import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.*;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.parseDateOrDefault;
 import static golf.flogbackend.exception.ErrorCode.INVALID_DATE_ORDER;
 
 @Service
@@ -43,7 +46,8 @@ public class FlightLogGetService {
     public ResponseEntity<FlightLogResponseDto.FlightLogDataDto> getFlightLogData(Member member, String startDate, String endDate) {
         LocalDate parsedStartDate = parseDateOrDefault(startDate, LocalDate.EPOCH);
         LocalDate parsedEndDate = parseDateOrDefault(endDate, LocalDate.now());
-        if (!parsedStartDate.isBefore(parsedEndDate)) throw new IllegalArgumentException(INVALID_DATE_ORDER.code() + "startDate must be before endDate");
+        if (!parsedStartDate.isBefore(parsedEndDate))
+            throw new IllegalArgumentException(INVALID_DATE_ORDER.code() + "startDate must be before endDate");
 
         List<FlightLog> flightLogList = flightLogRepository.findByMemberIdAndFlightDateBetween(member.getEmail(), parsedStartDate, parsedEndDate);
 
@@ -51,18 +55,38 @@ public class FlightLogGetService {
                 flightLogList,
                 flightLogRepository.findDutyStatsGroupedByAircraftType(member.getEmail(), parsedStartDate, parsedEndDate).stream()
                         .collect(Collectors.groupingBy(DutyCountByAircraftType::getAircraftType))
-                        .entrySet().stream()
+                        .entrySet()
+                        .stream()
+                        .sorted(Comparator.comparingLong(
+                                (Map.Entry<String, List<DutyCountByAircraftType>> entry) ->
+                                        entry.getValue().stream()
+                                                .mapToLong(DutyCountByAircraftType::getCount)
+                                                .sum()
+                        ).reversed())
                         .map(entry -> FlightLogResponseDto.DutyByAircraftTypeDto.builder()
                                 .aircraftType(entry.getKey())
-                                .dutyTotalCount(entry.getValue().stream().mapToLong(DutyCountByAircraftType::getCount).sum())
+                                .dutyTotalCount(entry.getValue()
+                                        .stream()
+                                        .mapToLong(DutyCountByAircraftType::getCount).sum())
                                 .dutyByAircraftType(
                                         entry.getValue().stream()
-                                                .map(d -> new FlightLogResponseDto.DutyDto(d.getDuty() != null ? d.getDuty() : "UNKNOWN", d.getCount()))
+                                                .sorted(Comparator.comparingLong(DutyCountByAircraftType::getCount).reversed())
+                                                .map(d -> new FlightLogResponseDto.DutyDto(
+                                                        d.getDuty() != null ? d.getDuty() : "UNKNOWN", d.getCount()))
                                                 .toList()
                                 )
                                 .build()
                         )
-                        .toList()
-        ));
+                        .toList(),
+                crewRepository.findByEmail(member.getEmail()).stream()
+                        .collect(Collectors.groupingBy(Crew::getName, Collectors.counting()))
+                        .entrySet()
+                        .stream()
+                        .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                        .map(e -> FlightLogResponseDto.CrewMateDto.builder()
+                                .name(e.getKey())
+                                .count(e.getValue())
+                                .build())
+                        .toList()));
     }
 }

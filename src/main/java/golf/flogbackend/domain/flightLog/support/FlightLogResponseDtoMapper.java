@@ -155,7 +155,8 @@ public class FlightLogResponseDtoMapper {
     }
 
     public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(List<FlightLog> flightLogList,
-                                                                              List<FlightLogResponseDto.DutyByAircraftTypeDto> dutyByAircraftType) {
+                                                                              List<FlightLogResponseDto.DutyByAircraftTypeDto> dutyByAircraftType,
+                                                                              List<FlightLogResponseDto.CrewMateDto> crewList) {
         return FlightLogResponseDto.FlightLogDataDto.builder()
                 .workDays(flightLogList.stream().map(FlightLog::getFlightDate).distinct().count())
                 .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(flightLogList.stream().map(FlightLog::getFlightTime).reduce(Long::sum).orElse(0L)))
@@ -164,6 +165,7 @@ public class FlightLogResponseDtoMapper {
                 .mostVisitedAirport(buildMostVisitedDataDto(flightLogList, LocationType.AIRPORT))
                 .mostVisitedCities(buildMostVisitedDataDto(flightLogList, LocationType.CITY))
                 .mostVisitedCountries(buildMostVisitedDataDto(flightLogList, LocationType.COUNTRY))
+                .crewMate(crewList)
                 .dutyByAircraftType(dutyByAircraftType)
                 .build();
     }
