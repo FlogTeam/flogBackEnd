@@ -1,4 +1,4 @@
-package golf.flogbackend.domain.flightLog.support;
+package golf.flogbackend.domain.flightLog.enums;
 
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import lombok.AllArgsConstructor;

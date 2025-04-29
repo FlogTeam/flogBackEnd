@@ -1,4 +1,4 @@
-package golf.flogbackend.domain.flightLog.support;
+package golf.flogbackend.domain.flightLog.enums;
 
 public enum EndpointEnum {
     DEPARTURE,

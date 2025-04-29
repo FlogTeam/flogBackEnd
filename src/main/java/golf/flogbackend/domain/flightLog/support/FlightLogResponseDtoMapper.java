@@ -6,6 +6,8 @@ import golf.flogbackend.domain.flightLog.dto.FlightLogSummaryResponseDto;
 import golf.flogbackend.domain.flightLog.entity.Aircraft;
 import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
+import golf.flogbackend.domain.flightLog.enums.EndpointEnum;
+import golf.flogbackend.domain.flightLog.enums.LocationType;
 
 import java.util.List;
 

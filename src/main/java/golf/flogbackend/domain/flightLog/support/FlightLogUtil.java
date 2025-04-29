@@ -6,6 +6,7 @@ import golf.flogbackend.domain.country.entity.Country;
 import golf.flogbackend.domain.country.repository.CountryRepository;
 import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
+import golf.flogbackend.domain.flightLog.enums.EndpointEnum;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
