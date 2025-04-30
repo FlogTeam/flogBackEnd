@@ -2,6 +2,7 @@ package golf.flogbackend.domain.member.controller;
 
 import golf.flogbackend.domain.member.dto.LoginRequestDto;
 import golf.flogbackend.domain.member.dto.SignupRequestDto;
+import golf.flogbackend.domain.member.dto.UpdateNickNameRequestDto;
 import golf.flogbackend.domain.member.service.MemberService;
 import golf.flogbackend.security.userDetails.UserDetailsImpl;
 import jakarta.mail.MessagingException;
@@ -37,5 +38,8 @@ public class MemberController {
         return memberService.mailSend(userPrincipal.getMember());
     }
 
-
+    @PutMapping("/nickname")
+    public ResponseEntity<String> updateNickname(@AuthenticationPrincipal UserDetailsImpl userPrincipal, @RequestBody UpdateNickNameRequestDto requestDto) {
+        return memberService.updateNickname(userPrincipal.getMember(), requestDto);
+    }
 }
