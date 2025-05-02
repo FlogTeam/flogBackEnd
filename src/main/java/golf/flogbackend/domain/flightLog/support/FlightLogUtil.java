@@ -6,7 +6,7 @@ import golf.flogbackend.domain.country.entity.Country;
 import golf.flogbackend.domain.country.repository.CountryRepository;
 import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
-import golf.flogbackend.domain.flightLog.enums.EndpointEnum;
+import golf.flogbackend.domain.flightLog.enums.Endpoint;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +51,7 @@ public class FlightLogUtil {
                 () -> new EntityNotFoundException(NOT_FOUND_COUNTRY.getCode() + "존재하지 않는 나라 코드 : " + code));
     }
 
-    public static FlightEndpoint getEndpoint(FlightLog flightLog, EndpointEnum endpoint) {
+    public static FlightEndpoint getEndpoint(FlightLog flightLog, Endpoint endpoint) {
         return switch (endpoint) {
             case DEPARTURE -> flightLog.getDeparture();
             case ARRIVAL -> flightLog.getArrival();
