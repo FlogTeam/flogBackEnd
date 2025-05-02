@@ -1,6 +1,6 @@
 package golf.flogbackend.domain.flightLog.enums;
 
-public enum EndpointEnum {
+public enum Endpoint {
     DEPARTURE,
     ARRIVAL
 }

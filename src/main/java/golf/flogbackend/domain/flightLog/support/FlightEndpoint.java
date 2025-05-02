@@ -22,6 +22,7 @@ public interface FlightEndpoint {
     String getCountryNameKorean();
     String getCityCode();
     String getCityName();
+    String getCityNameKorean();
     Double getAirportLocationLat();
     Double getAirportLocationLon();
     TimeZone getAirportTimezone();

@@ -23,6 +23,8 @@ public class Airport {
     @Column
     private String cityName;
     @Column
+    private String cityNameKorean;
+    @Column
     private Double lon;
     @Column
     private Double lat;
