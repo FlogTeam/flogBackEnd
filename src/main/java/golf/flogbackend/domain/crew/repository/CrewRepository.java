@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface CrewRepository  extends JpaRepository<Crew, Long> {
     List<Crew> findByFlightLogId(Long flightLogId);
+    List<Crew> findByEmail(String email);
 }

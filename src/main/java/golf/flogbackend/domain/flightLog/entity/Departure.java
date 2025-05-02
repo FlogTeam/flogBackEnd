@@ -19,9 +19,13 @@ import java.util.TimeZone;
 @NoArgsConstructor
 public class Departure implements FlightEndpoint {
     @Column
-    private LocalDate dateUtc;
+    private LocalDate dateActualUtc;
     @Column
-    private LocalDate dateLocal;
+    private LocalDate dateActualLocal;
+    @Column
+    private LocalDate dateScheduledUtc;
+    @Column
+    private LocalDate dateScheduledLocal;
     @Column
     private String airportCode;
     @Column
@@ -32,6 +36,8 @@ public class Departure implements FlightEndpoint {
     private String cityCode;
     @Column
     private String cityName;
+    @Column
+    private String cityNameKorean;
     @Column
     private String countryCode;
     @Column

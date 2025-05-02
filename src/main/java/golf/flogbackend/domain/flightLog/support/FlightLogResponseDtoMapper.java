@@ -6,54 +6,60 @@ import golf.flogbackend.domain.flightLog.dto.FlightLogSummaryResponseDto;
 import golf.flogbackend.domain.flightLog.entity.Aircraft;
 import golf.flogbackend.domain.flightLog.entity.Distance;
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
+import golf.flogbackend.domain.flightLog.enums.Endpoint;
+import golf.flogbackend.domain.flightLog.enums.LocationType;
 
 import java.util.List;
-import java.util.Map;
 
 import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.getEndpoint;
 
 public class FlightLogResponseDtoMapper {
 
-    public static FlightLogResponseDto.ScheduledTimeDto buildScheduledTimeDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.ScheduledTimeDto buildScheduledTimeDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
         return new FlightLogResponseDto.ScheduledTimeDto(flightEndpoint.getScheduledTimeUtc(), flightEndpoint.getScheduledTimeLocal());
     }
 
-    public static FlightLogResponseDto.ActualTimeDto buildActualTimeDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.ActualTimeDto buildActualTimeDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
         return new FlightLogResponseDto.ActualTimeDto(flightEndpoint.getActualTimeUtc(), flightEndpoint.getActualTimeLocal());
     }
 
-    public static FlightLogResponseDto.DateInfoDto buildDateInfoDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.ScheduledDateInfoDto buildScheduledDateInfoDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
-        return new FlightLogResponseDto.DateInfoDto(flightEndpoint.getDateUtc(), flightEndpoint.getDateLocal());
+        return new FlightLogResponseDto.ScheduledDateInfoDto(flightEndpoint.getDateScheduledUtc(), flightEndpoint.getDateScheduledLocal());
     }
 
-    public static FlightLogResponseDto.AirportDto buildAirportDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.ActualDateInfoDto buildActualDateInfoDto(Endpoint endpoint, FlightLog flightLog) {
+        FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
+        return new FlightLogResponseDto.ActualDateInfoDto(flightEndpoint.getDateActualUtc(), flightEndpoint.getDateActualLocal());
+    }
+
+    public static FlightLogResponseDto.AirportDto buildAirportDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
         return new FlightLogResponseDto.AirportDto(flightEndpoint.getAirportCode(), flightEndpoint.getAirportName(),
                 flightEndpoint.getAirportNameKorean()
         );
     }
 
-    public static FlightLogResponseDto.CityDto buildCityDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.CityDto buildCityDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
-        return new FlightLogResponseDto.CityDto(flightEndpoint.getCityCode(), flightEndpoint.getCityName());
+        return new FlightLogResponseDto.CityDto(flightEndpoint.getCityCode(), flightEndpoint.getCityName(), flightEndpoint.getCityNameKorean());
     }
 
-    public static FlightLogResponseDto.LocationDto buildLocationDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.LocationDto buildLocationDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
         return new FlightLogResponseDto.LocationDto(flightEndpoint.getAirportLocationLat(), flightEndpoint.getAirportLocationLon());
     }
 
-    public static FlightLogResponseDto.CountryDto buildCountryDto(EndpointEnum endpoint, FlightLog flightLog) {
+    public static FlightLogResponseDto.CountryDto buildCountryDto(Endpoint endpoint, FlightLog flightLog) {
         FlightEndpoint flightEndpoint = getEndpoint(flightLog, endpoint);
         return new FlightLogResponseDto.CountryDto(flightEndpoint.getCountryCode(), flightEndpoint.getCountryName(),
                 flightEndpoint.getCountryNameKorean(), flightEndpoint.getRegion());
     }
 
     public static FlightLogResponseDto.FlightInfoDto buildFlightInfoDto(FlightLog flightLog) {
-        return new FlightLogResponseDto.FlightInfoDto(flightLog.getFlightId(), flightLog.getAirline());
+        return new FlightLogResponseDto.FlightInfoDto(flightLog.getFlightId(), flightLog.getAirline(), flightLog.getFlightDate());
     }
 
     public static FlightLogResponseDto.AircraftDto buildAircraftDto(Aircraft aircraft) {
@@ -78,27 +84,29 @@ public class FlightLogResponseDtoMapper {
 
     public static FlightLogResponseDto.DepartureDto buildDepartureDto(FlightLog flightLog) {
         return FlightLogResponseDto.DepartureDto.builder()
-                .dateInfo(buildDateInfoDto(EndpointEnum.DEPARTURE, flightLog))
-                .airport(buildAirportDto(EndpointEnum.DEPARTURE, flightLog))
-                .country(buildCountryDto(EndpointEnum.DEPARTURE, flightLog))
-                .city(buildCityDto(EndpointEnum.DEPARTURE, flightLog))
-                .location(buildLocationDto(EndpointEnum.DEPARTURE, flightLog))
+                .scheduledDateInfo(buildScheduledDateInfoDto(Endpoint.DEPARTURE, flightLog))
+                .actualDateInfo(buildActualDateInfoDto(Endpoint.DEPARTURE, flightLog))
+                .airport(buildAirportDto(Endpoint.DEPARTURE, flightLog))
+                .country(buildCountryDto(Endpoint.DEPARTURE, flightLog))
+                .city(buildCityDto(Endpoint.DEPARTURE, flightLog))
+                .location(buildLocationDto(Endpoint.DEPARTURE, flightLog))
                 .timeZone(flightLog.getDeparture().getAirportTimezone())
-                .scheduledTime(buildScheduledTimeDto(EndpointEnum.DEPARTURE, flightLog))
-                .actualTime(buildActualTimeDto(EndpointEnum.DEPARTURE, flightLog))
+                .scheduledTime(buildScheduledTimeDto(Endpoint.DEPARTURE, flightLog))
+                .actualTime(buildActualTimeDto(Endpoint.DEPARTURE, flightLog))
                 .build();
     }
 
     public static FlightLogResponseDto.ArrivalDto buildArrivalDto(FlightLog flightLog) {
         return FlightLogResponseDto.ArrivalDto.builder()
-                .dateInfo(buildDateInfoDto(EndpointEnum.ARRIVAL, flightLog))
-                .airport(buildAirportDto(EndpointEnum.ARRIVAL, flightLog))
-                .country(buildCountryDto(EndpointEnum.ARRIVAL, flightLog))
-                .city(buildCityDto(EndpointEnum.ARRIVAL, flightLog))
-                .location(buildLocationDto(EndpointEnum.ARRIVAL, flightLog))
+                .scheduledDateInfo(buildScheduledDateInfoDto(Endpoint.ARRIVAL, flightLog))
+                .actualDateInfo(buildActualDateInfoDto(Endpoint.ARRIVAL, flightLog))
+                .airport(buildAirportDto(Endpoint.ARRIVAL, flightLog))
+                .country(buildCountryDto(Endpoint.ARRIVAL, flightLog))
+                .city(buildCityDto(Endpoint.ARRIVAL, flightLog))
+                .location(buildLocationDto(Endpoint.ARRIVAL, flightLog))
                 .timeZone(flightLog.getArrival().getAirportTimezone())
-                .scheduledTime(buildScheduledTimeDto(EndpointEnum.ARRIVAL, flightLog))
-                .actualTime(buildActualTimeDto(EndpointEnum.ARRIVAL, flightLog))
+                .scheduledTime(buildScheduledTimeDto(Endpoint.ARRIVAL, flightLog))
+                .actualTime(buildActualTimeDto(Endpoint.ARRIVAL, flightLog))
                 .build();
     }
 
@@ -133,12 +141,36 @@ public class FlightLogResponseDtoMapper {
                 .build();
     }
 
-    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(FlightData stats, Map<String, Map<String, Long>> dutyByAircraftType) {
+    public static FlightLogResponseDto.MostVisitedDataDto buildMostVisitedDataDto(List<FlightLog> flightLogList,
+                                                                                  LocationType locationType) {
+        List<FlightLogResponseDto.VisitedDataDto> mostVisitedDeparture =
+                FlightLogUtil.createVisitedDataList(flightLogList,
+                        f -> locationType.getClassifier().apply(f).getLeft());
+        List<FlightLogResponseDto.VisitedDataDto> mostVisitedArrival =
+                FlightLogUtil.createVisitedDataList(flightLogList,
+                        f -> locationType.getClassifier().apply(f).getRight());
+
+        return FlightLogResponseDto.MostVisitedDataDto.builder()
+                .mostVisitedDeparture(mostVisitedDeparture)
+                .mostVisitedArrival(mostVisitedArrival)
+                .mostVisitedTotal(FlightLogUtil.concatVisitedDataList(
+                        mostVisitedDeparture.stream(), mostVisitedArrival.stream(), flightLogList.size()))
+                .build();
+    }
+
+
+    public static FlightLogResponseDto.FlightLogDataDto buildFlightLogDataDto(List<FlightLog> flightLogList,
+                                                                              List<FlightLogResponseDto.DutyByAircraftTypeDto> dutyByAircraftType,
+                                                                              List<FlightLogResponseDto.CrewMateDto> crewList) {
         return FlightLogResponseDto.FlightLogDataDto.builder()
-                .workDays(stats.getWorkDays())
-                .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(stats.getTotalFlightTime()))
-                .legCount(stats.getLegCount())
-                .dhCount(stats.getDhCount())
+                .workDays(flightLogList.stream().map(FlightLog::getFlightDate).distinct().count())
+                .totalFlightTime(new FlightLogResponseDto.FlightTimeDto(flightLogList.stream().map(FlightLog::getFlightTime).reduce(Long::sum).orElse(0L)))
+                .legCount((long) flightLogList.size())
+                .dhCount(flightLogList.stream().map(FlightLog::getDuty).filter(d -> d != null && (d.equals("DH") || d.equals("dh"))).count())
+                .mostVisitedAirport(buildMostVisitedDataDto(flightLogList, LocationType.AIRPORT))
+                .mostVisitedCities(buildMostVisitedDataDto(flightLogList, LocationType.CITY))
+                .mostVisitedCountries(buildMostVisitedDataDto(flightLogList, LocationType.COUNTRY))
+                .crewMate(crewList)
                 .dutyByAircraftType(dutyByAircraftType)
                 .build();
     }

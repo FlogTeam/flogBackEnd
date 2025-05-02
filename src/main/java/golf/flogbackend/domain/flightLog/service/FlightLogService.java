@@ -4,196 +4,119 @@ import golf.flogbackend.domain.airport.entity.Airport;
 import golf.flogbackend.domain.country.entity.Country;
 import golf.flogbackend.domain.crew.entity.Crew;
 import golf.flogbackend.domain.crew.repository.CrewRepository;
-import golf.flogbackend.domain.flightLog.dto.SaveFlightLogRequestDto;
+import golf.flogbackend.domain.flightLog.dto.FlightLogDtoBase;
+import golf.flogbackend.domain.flightLog.dto.FlightLogRequestDto;
+import golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto;
 import golf.flogbackend.domain.flightLog.dto.UpdateFlightLogRequestDto;
 import golf.flogbackend.domain.flightLog.entity.*;
 import golf.flogbackend.domain.flightLog.repository.FlightLogRepository;
 import golf.flogbackend.domain.flightLog.support.FlightLogUtil;
 import golf.flogbackend.domain.member.entity.Member;
-import jakarta.persistence.EntityExistsException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 import org.thymeleaf.util.StringUtils;
 
-import java.net.URI;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.TimeZone;
+import java.util.Objects;
 
-import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogAllInfoDto;
-import static golf.flogbackend.domain.flightLog.dto.FlightLogResponseDto.FlightLogSaveResponseDto;
-import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.*;
-import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.distanceInKilometerByHaversine;
+import static golf.flogbackend.domain.flightLog.support.FlightLogResponseDtoMapper.buildFlightLogAllInfoDto;
+import static golf.flogbackend.domain.flightLog.support.FlightLogUtil.*;
+import static golf.flogbackend.exception.ErrorCode.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FlightLogService {
-    @Value("${api.key}")
-    private String apiKey;
+
     private final FlightLogRepository flightLogRepository;
     private final CrewRepository crewRepository;
     private final FlightLogUtil flightLogUtil;
 
     @Transactional
-    public ResponseEntity<FlightLogSaveResponseDto> saveFlightLog(Member member, SaveFlightLogRequestDto saveFlightLogRequestDto) throws ParseException {
-        String flightId = saveFlightLogRequestDto.getFlightId();
-        LocalDate flightDate = saveFlightLogRequestDto.getFlightDate();
+    public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto> createFlightLog(Member member, FlightLogRequestDto flightLogRequestDto) {
+        FlightLogDtoBase.FlightInfoDto flightInfo = flightLogRequestDto.getFlightInfo();
+        FlightLogDtoBase.DepartureDto departure = flightLogRequestDto.getDeparture();
+        FlightLogDtoBase.ArrivalDto arrival = flightLogRequestDto.getArrival();
+        FlightLogDtoBase.AircraftDto aircraft = flightLogRequestDto.getAircraft();
+        FlightLogDtoBase.DistanceDto distance = flightLogRequestDto.getDistance();
 
-        Optional<FlightLog> flightLogCheck = flightLogRepository.findByMemberIdAndFlightIdAndFlightDate(member.getEmail(), flightId, flightDate);
-        if (flightLogCheck.isPresent())
-            throw new EntityExistsException("flightLogId : " + flightLogCheck.get().getId());
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("x-rapidapi-host", "aerodatabox.p.rapidapi.com");
-        headers.add("x-rapidapi-key", apiKey);
-
-        StringBuilder apiUrl = new StringBuilder();
-        apiUrl.append("https://aerodatabox.p.rapidapi.com/flights/number/")
-                .append(flightId)
-                .append("/")
-                .append(flightDate)
-                .append("/?dateLocalRole=Both");
-
-
-        URI uri = URI.create(apiUrl.toString());
-
-        ResponseEntity<String> flightData;
-        String body;
-        try {
-            flightData = restTemplate.exchange(
-                    uri,
-                    HttpMethod.GET,
-                    new HttpEntity<>(headers),
-                    String.class);
-            if (flightData.getBody() != null)
-                body = flightData.getBody().substring(1, flightData.getBody().length() - 1);
-            else throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-
-        } catch (HttpClientErrorException b) {
-            throw new EntityNotFoundException("검색 실패 : " + flightId + " / " + flightDate);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage());
-        }
-
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObj = (JSONObject) jsonParser.parse(body);
-
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mmXXX");
-
-        JSONObject aircraftData = (JSONObject) jsonObj.get("aircraft");
-        JSONObject departureData = (JSONObject) jsonObj.get("departure");
-        JSONObject depAirportData = (JSONObject) departureData.get("airport");
-
-        JSONObject arrivalData = (JSONObject) jsonObj.get("arrival");
-        JSONObject arrivalAirportData = (JSONObject) arrivalData.get("airport");
-
-        JSONObject greatCircleDistanceData = (JSONObject) jsonObj.get("greatCircleDistance");
-
-        String depCountryCode = (String) depAirportData.get("countryCode");
-        String arrivalCountryCode = (String) arrivalAirportData.get("countryCode");
-
-
-        ZonedDateTime depScheduleLocal = ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("local"), formatter);
-        ZonedDateTime depScheduleUtc = ZonedDateTime.parse((String) ((JSONObject) departureData.get("scheduledTime")).get("utc"), formatter);
-        ZonedDateTime arrivalScheduleUtc = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("utc"), formatter);
-        ZonedDateTime arrivalScheduleLocal = ZonedDateTime.parse((String) ((JSONObject) arrivalData.get("scheduledTime")).get("local"), formatter);
-
-        LocalTime depScheduleTimeUtc = depScheduleUtc.toLocalTime();
-        LocalTime depScheduleTimeLocal = depScheduleLocal.toLocalTime();
-
-        LocalTime arrivalScheduleTimeUtc = arrivalScheduleUtc.toLocalTime();
-        LocalTime arrivalScheduleTimeLocal = arrivalScheduleLocal.toLocalTime();
-
-        Airport depAirport = flightLogUtil.findAirportByCode((String) depAirportData.get("iata"));
-        Airport arriAirport = flightLogUtil.findAirportByCode((String) arrivalAirportData.get("iata"));
-        Country depCountry = flightLogUtil.findCountryByCode(depCountryCode);
-        Country arriCountry = flightLogUtil.findCountryByCode(arrivalCountryCode);
-
-        FlightLog flightLog = flightLogRepository.save(FlightLog.builder()
-                .flightId(saveFlightLogRequestDto.getFlightId())
-                .flightDate(flightDate)
-                .airline((String) ((JSONObject) jsonObj.get("airline")).get("name"))
-                .memberId(member.getEmail())
-                .departure(Departure.builder()
-                        .dateUtc(depScheduleUtc.toLocalDate())
-                        .dateLocal(depScheduleLocal.toLocalDate())
-                        .scheduledTimeUtc(depScheduleTimeUtc)
-                        .scheduledTimeLocal(depScheduleTimeLocal)
-                        .actualTimeUtc(depScheduleTimeUtc)
-                        .actualTimeLocal(depScheduleTimeLocal)
-                        .airportLocationLat((Double) ((JSONObject) depAirportData.get("location")).get("lat"))
-                        .airportLocationLon((Double) ((JSONObject) depAirportData.get("location")).get("lon"))
-                        .airportCode(depAirport.getCode())
-                        .airportName(depAirport.getAirportName())
-                        .airportNameKorean(depAirport.getAirportNameKorean())
-                        .airportTimezone(TimeZone.getTimeZone((String) depAirportData.get("timeZone")))
-                        .countryCode(depCountryCode)
-                        .countryName(depCountry.getCountryName())
-                        .countryNameKorean(depCountry.getCountryNameKorean())
-                        .region(depCountry.getRegion())
-                        .cityCode(depAirport.getCityCode())
-                        .cityName(depAirport.getCityName())
-                        .build())
-                .arrival(Arrival.builder()
-                        .dateUtc(arrivalScheduleUtc.toLocalDate())
-                        .dateLocal(arrivalScheduleLocal.toLocalDate())
-                        .scheduledTimeUtc(arrivalScheduleTimeUtc)
-                        .scheduledTimeLocal(arrivalScheduleTimeLocal)
-                        .actualTimeUtc(arrivalScheduleTimeUtc)
-                        .actualTimeLocal(arrivalScheduleTimeLocal)
-                        .airportLocationLat((Double) ((JSONObject) arrivalAirportData.get("location")).get("lat"))
-                        .airportLocationLon((Double) ((JSONObject) arrivalAirportData.get("location")).get("lon"))
-                        .airportCode(arriAirport.getCode())
-                        .airportName(arriAirport.getAirportName())
-                        .airportNameKorean(arriAirport.getAirportNameKorean())
-                        .airportTimezone(TimeZone.getTimeZone((String) arrivalAirportData.get("timeZone")))
-                        .countryCode(arrivalCountryCode)
-                        .countryName(arriCountry.getCountryName())
-                        .countryNameKorean(arriCountry.getCountryNameKorean())
-                        .region(arriCountry.getRegion())
-                        .cityCode(arriAirport.getCityCode())
-                        .cityName(arriAirport.getCityName())
-                        .build())
-                .aircraft(Aircraft.builder()
-                        .aircraftNumber((String) aircraftData.get("reg"))
-                        .aircraftType((String) aircraftData.get("model"))
-                        .build())
-                .distance(Distance.builder()
-                        .kilometers((Double) greatCircleDistanceData.get("km"))
-                        .meters((Double) greatCircleDistanceData.get("meter"))
-                        .miles((Double) greatCircleDistanceData.get("mile"))
-                        .build())
-                .flightTime(Duration.between(depScheduleUtc, arrivalScheduleUtc).toSeconds())
-                .build());
-
-
-        return ResponseEntity.ok(FlightLogSaveResponseDto.builder()
-                .flightLogId(flightLog.getId())
-                .flightInfo(buildFlightInfoDto(flightLog))
-                .departure(buildDepartureDto(flightLog))
-                .arrival(buildArrivalDto(flightLog))
-                .aircraft(buildAircraftDto(flightLog.getAircraft()))
-                .build());
+        return ResponseEntity.ok(buildFlightLogAllInfoDto(flightLogRepository
+                .save(FlightLog.builder()
+                        .memberId(member.getEmail())
+                        .flightId(flightInfo.flightId())
+                        .flightDate(flightInfo.flightDate())
+                        .airline(flightInfo.airline())
+                        .departure(Departure.builder()
+                                .dateScheduledUtc(departure.getScheduledDateInfo().utc())
+                                .dateScheduledLocal(departure.getScheduledDateInfo().local())
+                                .dateActualUtc(departure.getActualDateInfo().utc())
+                                .dateActualLocal(departure.getActualDateInfo().local())
+                                .scheduledTimeUtc(departure.getScheduledTime().utc())
+                                .scheduledTimeLocal(departure.getScheduledTime().local())
+                                .actualTimeUtc(departure.getActualTime().utc())
+                                .actualTimeLocal(departure.getActualTime().local())
+                                .airportLocationLat(departure.getLocation().latitude())
+                                .airportLocationLon(departure.getLocation().longitude())
+                                .airportCode(departure.getAirport().code())
+                                .airportName(departure.getAirport().name())
+                                .airportNameKorean(departure.getAirport().nameKorean())
+                                .airportTimezone(departure.getTimeZone())
+                                .countryCode(departure.getCountry().code())
+                                .countryName(departure.getCountry().name())
+                                .countryNameKorean(departure.getCountry().nameKorean())
+                                .region(departure.getCountry().region())
+                                .cityCode(departure.getCity().code())
+                                .cityName(departure.getCity().name())
+                                .cityNameKorean(departure.getCity().cityNameKorean())
+                                .build())
+                        .arrival(Arrival.builder()
+                                .dateScheduledUtc(arrival.getScheduledDateInfo().utc())
+                                .dateScheduledLocal(arrival.getScheduledDateInfo().local())
+                                .dateActualUtc(arrival.getActualDateInfo().utc())
+                                .dateActualLocal(arrival.getActualDateInfo().local())
+                                .scheduledTimeUtc(arrival.getScheduledTime().utc())
+                                .scheduledTimeLocal(arrival.getScheduledTime().local())
+                                .actualTimeUtc(arrival.getActualTime().utc())
+                                .actualTimeLocal(arrival.getActualTime().local())
+                                .airportLocationLat(arrival.getLocation().latitude())
+                                .airportLocationLon(arrival.getLocation().longitude())
+                                .airportCode(arrival.getAirport().code())
+                                .airportName(arrival.getAirport().name())
+                                .airportNameKorean(arrival.getAirport().nameKorean())
+                                .airportTimezone(arrival.getTimeZone())
+                                .countryCode(arrival.getCountry().code())
+                                .countryName(arrival.getCountry().name())
+                                .countryNameKorean(arrival.getCountry().nameKorean())
+                                .region(arrival.getCountry().region())
+                                .cityCode(arrival.getCity().code())
+                                .cityName(arrival.getCity().name())
+                                .cityNameKorean(arrival.getCity().cityNameKorean())
+                                .build())
+                        .aircraft(Aircraft.builder()
+                                .aircraftNumber(aircraft.number())
+                                .aircraftType(aircraft.type())
+                                .build())
+                        .distance(Distance.builder()
+                                .kilometers(distance.getKilometers())
+                                .meters(distance.getMeters())
+                                .miles(distance.getMiles())
+                                .build())
+                        .flightTime(Duration.between(
+                                LocalDateTime.of(departure.getScheduledDateInfo().utc(), departure.getScheduledTime().utc()),
+                                LocalDateTime.of(arrival.getScheduledDateInfo().utc(), arrival.getScheduledTime().utc())
+                        ).toSeconds())
+                        .build()), List.of()));
     }
 
     @Transactional
-    public ResponseEntity<FlightLogAllInfoDto> updateFlightLog(Member member, UpdateFlightLogRequestDto updateFlightLogRequestDto) {
+    public ResponseEntity<FlightLogResponseDto.FlightLogAllInfoDto> updateFlightLog(Member member, UpdateFlightLogRequestDto updateFlightLogRequestDto) {
         Long flightLogId = updateFlightLogRequestDto.getFlightLogId();
 
         FlightLog flightLog = flightLogUtil.findFlightLogById(flightLogId);
@@ -208,24 +131,68 @@ public class FlightLogService {
         String setArrivalAirportCode = updateFlightLogRequestDto.getArrivalAirportCode();
         String getArrivalAirportCode = flightLog.getArrival().getAirportCode();
 
-        LocalDate depDateUtc = updateFlightLogRequestDto.getDepDateUtc();
-        LocalDate depDateLocal = updateFlightLogRequestDto.getDepDateLocal();
-        LocalDate arrivalDateUtc = updateFlightLogRequestDto.getArrivalDateUtc();
-        LocalDate arrivalDateLocal = updateFlightLogRequestDto.getArrivalDateLocal();
+        LocalDate depDateActualUtc = parseDateOrDefault(updateFlightLogRequestDto.getDepDateActualUtc(), departure.getDateActualLocal());
+        LocalDate depDateActualLocal = parseDateOrDefault(updateFlightLogRequestDto.getDepDateActualLocal(), departure.getDateActualLocal());
+
+        LocalDate depDateScheduledUtc = parseDateOrDefault(updateFlightLogRequestDto.getDepDateScheduledUtc(), departure.getDateScheduledUtc());
+        LocalDate depDateScheduledLocal = parseDateOrDefault(updateFlightLogRequestDto.getDepDateScheduledLocal(), departure.getDateScheduledLocal());
+
+        LocalDate arrivalDateActualUtc = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateActualUtc(), arrival.getDateActualUtc());
+        LocalDate arrivalDateActualLocal = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateActualLocal(), arrival.getDateActualLocal());
+
+        LocalDate arrivalDateScheduledUtc = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateScheduledUtc(), arrival.getDateScheduledUtc());
+        LocalDate arrivalDateScheduledLocal = parseDateOrDefault(updateFlightLogRequestDto.getArrivalDateScheduledLocal(), arrival.getDateScheduledLocal());
+
         String airline = updateFlightLogRequestDto.getAirline();
         String aircraftNumber = updateFlightLogRequestDto.getAircraftNumber();
         String aircraftType = updateFlightLogRequestDto.getAircraftType();
         String duty = updateFlightLogRequestDto.getDuty();
 
-        LocalTime depScheduledTimeUtc = updateFlightLogRequestDto.getDepScheduledTimeUtc() == null ? departure.getScheduledTimeUtc() : updateFlightLogRequestDto.getDepScheduledTimeUtc();
-        LocalTime depScheduledTimeLocal = updateFlightLogRequestDto.getDepScheduledTimeLocal() == null ? departure.getScheduledTimeLocal() : updateFlightLogRequestDto.getDepScheduledTimeLocal();
-        LocalTime arrivalScheduledTimeUtc = updateFlightLogRequestDto.getArrivalScheduledTimeUtc() == null ? arrival.getScheduledTimeUtc() : updateFlightLogRequestDto.getArrivalScheduledTimeUtc();
-        LocalTime arrivalScheduledTimeLocal = updateFlightLogRequestDto.getArrivalScheduledTimeLocal() == null ? arrival.getScheduledTimeLocal() : updateFlightLogRequestDto.getArrivalScheduledTimeLocal();
+        LocalTime depScheduledTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getDepScheduledTimeUtc(), departure.getScheduledTimeUtc());
+        LocalTime depScheduledTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getDepScheduledTimeLocal(), departure.getScheduledTimeLocal());
+        LocalTime arrivalScheduledTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalScheduledTimeUtc(), arrival.getScheduledTimeUtc());
+        LocalTime arrivalScheduledTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalScheduledTimeLocal(), arrival.getScheduledTimeLocal());
 
-        LocalTime depActualTimeUtc = updateFlightLogRequestDto.getDepActualTimeUtc() == null ? depScheduledTimeUtc : updateFlightLogRequestDto.getDepActualTimeUtc();
-        LocalTime depActualTimeLocal = updateFlightLogRequestDto.getDepActualTimeLocal() == null ? depScheduledTimeLocal : updateFlightLogRequestDto.getDepActualTimeLocal();
-        LocalTime arrivalActualTimeUtc = updateFlightLogRequestDto.getArrivalActualTimeUtc() == null ? arrivalScheduledTimeUtc : updateFlightLogRequestDto.getArrivalActualTimeUtc();
-        LocalTime arrivalActualTimeLocal = updateFlightLogRequestDto.getArrivalActualTimeLocal() == null ? arrivalScheduledTimeLocal : updateFlightLogRequestDto.getArrivalActualTimeLocal();
+        LocalTime depActualTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getDepActualTimeUtc(), departure.getActualTimeUtc());
+        LocalTime depActualTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getDepActualTimeLocal(), departure.getActualTimeLocal());
+        LocalTime arrivalActualTimeUtc = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalActualTimeUtc(), arrival.getActualTimeUtc());
+        LocalTime arrivalActualTimeLocal = parseTimeOrDefault(updateFlightLogRequestDto.getArrivalActualTimeLocal(), arrival.getActualTimeLocal());
+
+        LocalDateTime depActualDateTimeUtc = LocalDateTime.of(depDateActualUtc, depActualTimeUtc);
+        LocalDateTime arrivalActualDateTimeUtc = LocalDateTime.of(arrivalDateActualUtc, arrivalActualTimeUtc);
+
+        LocalDateTime depActualDateTimeLocal = LocalDateTime.of(depDateActualLocal, depActualTimeLocal);
+        LocalDateTime arrivalActualDateTimeLocal = LocalDateTime.of(arrivalDateActualLocal, arrivalActualTimeLocal);
+
+        LocalDateTime depScheduleDateTimeUtc = LocalDateTime.of(depDateScheduledUtc, depScheduledTimeUtc);
+        LocalDateTime arrivalScheduleDateTimeUtc = LocalDateTime.of(arrivalDateScheduledUtc, arrivalScheduledTimeUtc);
+
+        LocalDateTime depScheduleDateTimeLocal = LocalDateTime.of(depDateScheduledLocal, depScheduledTimeLocal);
+        LocalDateTime arrivalScheduleDateTimeLocal = LocalDateTime.of(arrivalDateScheduledLocal, arrivalScheduledTimeLocal);
+
+
+        if (arrivalActualDateTimeUtc.isBefore(depActualDateTimeUtc))
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_ACTUAL_UTC.getCode() + String.format(
+                    "도착 시각(Actual/UTC)은 출발 시각(Actual/UTC)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
+                    depActualDateTimeUtc, arrivalActualDateTimeUtc
+            ));
+        if (arrivalActualDateTimeLocal.isBefore(depActualDateTimeLocal))
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_ACTUAL_LOCAL.getCode() + String.format(
+                    "도착 시각(Actual/Local)은 출발 시각(Actual/Local)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
+                    depActualDateTimeLocal, arrivalActualDateTimeLocal
+            ));
+
+        if (arrivalScheduleDateTimeUtc.isBefore(depScheduleDateTimeUtc))
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_UTC.getCode() + String.format(
+                    "도착 시각(Scheduled/UTC)은 출발 시각(Scheduled/UTC)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
+                    depScheduleDateTimeUtc, arrivalScheduleDateTimeUtc
+            ));
+
+        if (arrivalScheduleDateTimeLocal.isBefore(depScheduleDateTimeLocal))
+            throw new IllegalArgumentException(ARRIVAL_BEFORE_DEPARTURE_SCHEDULED_LOCAL.getCode() + String.format(
+                    "도착 시각(Scheduled/Local)은 출발 시각(Scheduled/Local)보다 빠를 수 없습니다. 출발: %s, 도착: %s",
+                    depScheduleDateTimeLocal, arrivalScheduleDateTimeLocal
+            ));
 
         aircraft = aircraft.toBuilder()
                 .aircraftNumber(StringUtils.isEmptyOrWhitespace(aircraftNumber) ? aircraft.getAircraftNumber() : aircraftNumber)
@@ -233,8 +200,10 @@ public class FlightLogService {
                 .build();
 
         departure = departure.toBuilder()
-                .dateUtc(depDateUtc == null ? departure.getDateUtc() : depDateUtc)
-                .dateLocal(depDateLocal == null ? departure.getDateLocal() : depDateLocal)
+                .dateActualUtc(depDateActualUtc)
+                .dateActualLocal(depDateActualLocal)
+                .dateScheduledUtc(depDateScheduledUtc)
+                .dateScheduledLocal(depDateScheduledLocal)
                 .scheduledTimeUtc(depScheduledTimeUtc)
                 .scheduledTimeLocal(depScheduledTimeLocal)
                 .actualTimeUtc(depActualTimeUtc)
@@ -242,13 +211,16 @@ public class FlightLogService {
                 .build();
 
         arrival = arrival.toBuilder()
-                .dateUtc(arrivalDateUtc == null ? arrival.getDateUtc() : arrivalDateUtc)
-                .dateLocal(arrivalDateLocal == null ? arrival.getDateLocal() : arrivalDateLocal)
+                .dateActualUtc(arrivalDateActualUtc)
+                .dateActualLocal(arrivalDateActualLocal)
+                .dateScheduledUtc(arrivalDateScheduledUtc)
+                .dateScheduledLocal(arrivalDateScheduledLocal)
                 .scheduledTimeUtc(arrivalScheduledTimeUtc)
                 .scheduledTimeLocal(arrivalScheduledTimeLocal)
                 .actualTimeUtc(arrivalActualTimeUtc)
                 .actualTimeLocal(arrivalActualTimeLocal)
                 .build();
+
 
         if (!StringUtils.isEmptyOrWhitespace(setDepAirportCode)) {
             if (setDepAirportCode.equals(setArrivalAirportCode))
@@ -262,6 +234,7 @@ public class FlightLogService {
                         .airportNameKorean(airport.getAirportNameKorean())
                         .cityCode(airport.getCityCode())
                         .cityName(airport.getCityName())
+                        .cityNameKorean(airport.getCityNameKorean())
                         .countryCode(airport.getCountryCode())
                         .countryName(country.getCountryName())
                         .countryNameKorean(country.getCountryNameKorean())
@@ -281,6 +254,7 @@ public class FlightLogService {
                     .airportNameKorean(airport.getAirportNameKorean())
                     .cityCode(airport.getCityCode())
                     .cityName(airport.getCityName())
+                    .cityNameKorean(airport.getCityNameKorean())
                     .countryCode(airport.getCountryCode())
                     .countryName(country.getCountryName())
                     .countryNameKorean(country.getCountryNameKorean())
@@ -291,8 +265,8 @@ public class FlightLogService {
                     .build();
         }
 
-        if ((!StringUtils.isEmptyOrWhitespace(setDepAirportCode) && !setDepAirportCode.equals(getDepAirportCode)) ||
-                (!StringUtils.isEmptyOrWhitespace(setArrivalAirportCode) && !setArrivalAirportCode.equals(getArrivalAirportCode))) {
+        if ((!StringUtils.isEmptyOrWhitespace(setDepAirportCode) || !StringUtils.isEmptyOrWhitespace(setArrivalAirportCode)) &&
+                !(Objects.equals(getDepAirportCode, setDepAirportCode) && Objects.equals(getArrivalAirportCode, setArrivalAirportCode))) {
             Double distanceKilometers = distanceInKilometerByHaversine(
                     departure.getAirportLocationLat(),
                     arrival.getAirportLocationLat(),
@@ -305,6 +279,7 @@ public class FlightLogService {
                             .miles(distanceKilometers * 0.621371)
                             .build())
                     .build();
+
         }
 
         flightLog = flightLog.toBuilder()
@@ -317,9 +292,9 @@ public class FlightLogService {
                 .aircraft(aircraft)
                 .build();
 
+
         flightLog = flightLog.toBuilder()
-                .flightTime(Duration.between(LocalDateTime.of(flightLog.getDeparture().getDateUtc(), depActualTimeUtc),
-                        LocalDateTime.of(flightLog.getDeparture().getDateUtc(), arrivalActualTimeUtc)).toSeconds())
+                .flightTime(Duration.between(depActualDateTimeUtc, arrivalActualDateTimeUtc).toSeconds())
                 .build();
 
         flightLogRepository.save(flightLog);
@@ -334,3 +309,4 @@ public class FlightLogService {
                         .toList()) : List.of()));
     }
 }
+

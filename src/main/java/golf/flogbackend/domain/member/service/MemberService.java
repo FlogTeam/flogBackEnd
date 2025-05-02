@@ -2,8 +2,10 @@ package golf.flogbackend.domain.member.service;
 
 import golf.flogbackend.domain.member.dto.LoginRequestDto;
 import golf.flogbackend.domain.member.dto.SignupRequestDto;
+import golf.flogbackend.domain.member.dto.UpdateNickNameRequestDto;
 import golf.flogbackend.domain.member.entity.Member;
 import golf.flogbackend.domain.member.repository.MemberRepository;
+import golf.flogbackend.domain.nickname.service.NicknameService;
 import golf.flogbackend.mail.EmailSenderImpl;
 import golf.flogbackend.redis.RedisUtil;
 import golf.flogbackend.security.jwt.JwtUtil;
@@ -33,17 +35,18 @@ public class MemberService {
 
     private final JwtUtil jwtUtil;
     private final RedisUtil redisUtil;
+    private final NicknameService nicknameService;
 
     public ResponseEntity<String> checkEmail(String email) {
-        if (findMemberByEmail(email).isPresent()) throw new EntityExistsException("EMAIL_ALREADY_EXISTS : " + email);
+        if (findMemberByEmail(email)) throw new EntityExistsException("EMAIL_ALREADY_EXISTS : " + email);
         return ResponseEntity.ok("이메일 중복 확인 완료");
     }
 
     @Transactional
     public ResponseEntity<String> signup(SignupRequestDto signupRequestDto) {
-        if (findMemberByEmail(signupRequestDto.getEmail()).isPresent())
+        if (findMemberByEmail(signupRequestDto.getEmail()))
             throw new EntityExistsException("EMAIL_ALREADY_EXISTS : " + signupRequestDto.getEmail());
-        memberRepository.save(new Member(signupRequestDto.getEmail(), passwordEncoder.encode(signupRequestDto.getPassword())));
+        memberRepository.save(new Member(signupRequestDto.getEmail(), nicknameService.getRandomNickname(), passwordEncoder.encode(signupRequestDto.getPassword())));
 
         return ResponseEntity.ok("회원 가입 성공");
     }
@@ -72,7 +75,16 @@ public class MemberService {
         return ResponseEntity.ok("");
     }
 
-    private Optional<Member> findMemberByEmail(String email) {
-        return memberRepository.findById(email);
+    private boolean findMemberByEmail(String email) {
+        return memberRepository.existsById(email);
+    }
+
+    @Transactional
+    public ResponseEntity<String> updateNickname(Member member, UpdateNickNameRequestDto requestDto) {
+        String nickname = requestDto.getNickname();
+        if (memberRepository.existsByNickname(nickname)) throw new EntityExistsException("NICKNAME_ALREADY_EXISTS : " + nickname);
+        member.setNickname(nickname);
+        memberRepository.save(member);
+        return ResponseEntity.ok(member.getNickname());
     }
 }

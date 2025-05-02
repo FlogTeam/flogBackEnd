@@ -2,7 +2,6 @@ package golf.flogbackend.domain.flightLog.repository;
 
 import golf.flogbackend.domain.flightLog.entity.FlightLog;
 import golf.flogbackend.domain.flightLog.support.DutyCountByAircraftType;
-import golf.flogbackend.domain.flightLog.support.FlightData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,27 +17,17 @@ public interface FlightLogRepository extends JpaRepository<FlightLog, Long> {
 
     List<FlightLog> findByMemberIdOrderByCreateAtDesc(String memberId);
 
-    @Query("""
-        SELECT 
-            COUNT(DISTINCT f.flightDate) AS workDays,
-            COUNT(f) AS legCount,
-            SUM(CASE WHEN UPPER(f.duty) = 'DH' THEN 1 ELSE 0 END) AS dhCount,
-            SUM(COALESCE(f.flightTime, 0)) AS totalFlightTime
-        FROM FlightLog f 
-        WHERE f.memberId = :memberId 
-        AND f.flightDate between :startDate and :endDate
-    """)
-    FlightData getStatsByMember(@Param("memberId") String memberId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    List<FlightLog> findByMemberIdAndFlightDateBetween(String memberId, LocalDate flightDateAfter, LocalDate flightDateBefore);
 
     @Query("""
-        SELECT 
-            f.aircraft.aircraftType AS aircraftType,
-            UPPER(f.duty) AS duty,
-            COUNT(f) AS count
-        FROM FlightLog f
-        WHERE f.memberId = :memberId
-        AND f.flightDate between :startDate and :endDate
-        GROUP BY f.aircraft.aircraftType, f.duty
-    """)
-    List<DutyCountByAircraftType> findDutyStatsGroupedByAircraftType(@Param("memberId") String memberId,  @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+                SELECT 
+                    f.aircraft.aircraftType AS aircraftType,
+                    UPPER(f.duty) AS duty,
+                    COUNT(f) AS count
+                FROM FlightLog f
+                WHERE f.memberId = :memberId
+                AND f.flightDate between :startDate and :endDate
+                GROUP BY f.aircraft.aircraftType, f.duty
+            """)
+    List<DutyCountByAircraftType> findDutyStatsGroupedByAircraftType(@Param("memberId") String memberId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
